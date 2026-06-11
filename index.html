@@ -720,20 +720,38 @@ function toast(msg,warn=false){
   setTimeout(()=>el.classList.remove("show"),2500);
 }
 
+function calcularRacha(){
+  const dias=new Set(window.hist.filter(t=>t.completada).map(t=>t.completada));
+  let racha=0;
+  const d=new Date();
+  // Si hoy aún no has completado nada, la racha empieza a contar desde ayer (no se rompe hasta acabar el día)
+  if(!dias.has(d.toISOString().split("T")[0])) d.setDate(d.getDate()-1);
+  while(dias.has(d.toISOString().split("T")[0])){
+    racha++;
+    d.setDate(d.getDate()-1);
+  }
+  return racha;
+}
 function statsBar(id){
-  const numPend=tareas.length;
-  const numComp=hist.length;
+  const numPend=window.tareas.length;
+  const numComp=window.hist.length;
   const total=numPend+numComp;
   const alta=window.tareas.filter(t=>t.prio==="Alta").length;
-  const venc=tareas.filter(t=>t.limite&&t.limite<hoy()).length;
-  const pct=total>0?Math.round(numComp/total*100):0;
+  const venc=window.tareas.filter(t=>t.limite&&t.limite<hoy()).length;
+  // % de hoy: de lo que tocaba hoy (vence hoy o está vencido + lo hecho hoy), cuánto está hecho
+  const hechasHoy=window.hist.filter(t=>t.completada===hoy()).length;
+  const tocanHoy=window.tareas.filter(t=>t.limite&&t.limite<=hoy()).length;
+  const baseHoy=hechasHoy+tocanHoy;
+  const pctHoy=baseHoy>0?Math.round(hechasHoy/baseHoy*100):null;
+  const racha=calcularRacha();
   const el=document.getElementById(id);
   if(!el)return;
   el.innerHTML=`
     <div class="stat blue"><span class="num">${total}</span> 📋 Total</div>
     <div class="stat warn"><span class="num">${numPend}</span> ⏳ Pendientes</div>
     <div class="stat ok"><span class="num">${numComp}</span> ✅ Hechas</div>
-    <div class="stat ok"><span class="num">${pct}%</span> completado</div>
+    <div class="stat ok"><span class="num">${pctHoy===null?"—":pctHoy+"%"}</span> hoy</div>
+    <div class="stat warn"><span class="num">${racha}</span> 🔥 Racha</div>
     <div class="stat danger"><span class="num">${alta}</span> ❗ Alta</div>
     <div class="stat danger"><span class="num">${venc}</span> ⚠️ Vencidas</div>
   `;
