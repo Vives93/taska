@@ -732,26 +732,25 @@ function calcularRacha(){
   }
   return racha;
 }
+function statsHoy(){
+  const hechasHoy=window.hist.filter(t=>t.completada===hoy()).length;
+  const tocanHoy=window.tareas.filter(t=>t.limite&&t.limite<=hoy()).length;
+  const base=hechasHoy+tocanHoy;
+  const pct=base>0?Math.round(hechasHoy/base*100):null;
+  return {pct,racha:calcularRacha()};
+}
 function statsBar(id){
   const numPend=window.tareas.length;
   const numComp=window.hist.length;
   const total=numPend+numComp;
   const alta=window.tareas.filter(t=>t.prio==="Alta").length;
   const venc=window.tareas.filter(t=>t.limite&&t.limite<hoy()).length;
-  // % de hoy: de lo que tocaba hoy (vence hoy o está vencido + lo hecho hoy), cuánto está hecho
-  const hechasHoy=window.hist.filter(t=>t.completada===hoy()).length;
-  const tocanHoy=window.tareas.filter(t=>t.limite&&t.limite<=hoy()).length;
-  const baseHoy=hechasHoy+tocanHoy;
-  const pctHoy=baseHoy>0?Math.round(hechasHoy/baseHoy*100):null;
-  const racha=calcularRacha();
   const el=document.getElementById(id);
   if(!el)return;
   el.innerHTML=`
     <div class="stat blue"><span class="num">${total}</span> 📋 Total</div>
     <div class="stat warn"><span class="num">${numPend}</span> ⏳ Pendientes</div>
     <div class="stat ok"><span class="num">${numComp}</span> ✅ Hechas</div>
-    <div class="stat ok"><span class="num">${pctHoy===null?"—":pctHoy+"%"}</span> hoy</div>
-    <div class="stat warn"><span class="num">${racha}</span> 🔥 Racha</div>
     <div class="stat danger"><span class="num">${alta}</span> ❗ Alta</div>
     <div class="stat danger"><span class="num">${venc}</span> ⚠️ Vencidas</div>
   `;
@@ -782,11 +781,13 @@ function renderFocus(){
     htmlHoy+=vencidas.map(t=>focusCard(t,"vencida")).join("");
   }
   if(deHoy.length>0){
-    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'}">📌 Para hoy (${deHoy.length})</div>`;
+    const sh=statsHoy();
+    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'};display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy (${deHoy.length})</span><span style="font-weight:500">${sh.pct!==null?sh.pct+"% · ":""}🔥 ${sh.racha}</span></div>`;
     htmlHoy+=deHoy.map(t=>focusCard(t,t.prio==="Alta"?"alta":"")).join("");
   }
   if(vencidas.length===0&&deHoy.length===0){
-    htmlHoy+=`<div class="section-label">📌 Para hoy</div>
+    const sh2=statsHoy();
+    htmlHoy+=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy</span><span style="font-weight:500">${sh2.pct!==null?sh2.pct+"% · ":""}🔥 ${sh2.racha}</span></div>
     <div style="text-align:center;padding:24px 16px 8px">
       <div style="font-size:44px;margin-bottom:8px">🎉</div>
       <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">¡Sin tareas urgentes!</div>
