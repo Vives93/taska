@@ -782,12 +782,12 @@ function renderFocus(){
   }
   if(deHoy.length>0){
     const sh=statsHoy();
-    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'};display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy (${deHoy.length})</span><span style="font-weight:500">${sh.pct!==null?sh.pct+"% · ":""}🔥 ${sh.racha}</span></div>`;
+    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'};display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy (${deHoy.length})</span><span style="font-weight:500">${sh.pct!==null?sh.pct+"% · ":""}🔥 ${sh.racha} ${sh.racha===1?"día":"días"} de racha</span></div>`;
     htmlHoy+=deHoy.map(t=>focusCard(t,t.prio==="Alta"?"alta":"")).join("");
   }
   if(vencidas.length===0&&deHoy.length===0){
     const sh2=statsHoy();
-    htmlHoy+=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy</span><span style="font-weight:500">${sh2.pct!==null?sh2.pct+"% · ":""}🔥 ${sh2.racha}</span></div>
+    htmlHoy+=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy</span><span style="font-weight:500">${sh2.pct!==null?sh2.pct+"% · ":""}🔥 ${sh2.racha} ${sh2.racha===1?"día":"días"} de racha</span></div>
     <div style="text-align:center;padding:24px 16px 8px">
       <div style="font-size:44px;margin-bottom:8px">🎉</div>
       <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">¡Sin tareas urgentes!</div>
