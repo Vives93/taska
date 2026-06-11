@@ -696,15 +696,13 @@ const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","
 
 tareas=[];
 window.hist=[];
-let nid=parseInt(localStorage.getItem("gtv2_id")||"1");
+function nuevoId(){return Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,7);}
 
 
 let calA=new Date().getFullYear(),calM=new Date().getMonth();
 let filtroActivo="";
 
-function save(){
-  localStorage.setItem("gtv2_id",nid);
-}
+function save(){}
 function hoy(){return new Date().toISOString().split("T")[0]}
 function fmt(d){if(!d)return"-";const p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function ds(d){const c=DEPTS[d]||DEPTS.Otro;return`background:${c[0]};color:${c[1]}`}
@@ -1013,7 +1011,7 @@ function cerrarModal(){
 function guardar(){
   const txt=document.getElementById("m-tarea").value.trim();
   if(!txt){document.getElementById("m-tarea").focus();return;}
-  const t={id:editandoId!==null?editandoId:nid++,tarea:txt,
+  const t={id:editandoId!==null?editandoId:nuevoId(),tarea:txt,
     dept:document.getElementById("m-dept").value,
     prio:document.getElementById("m-prio").value,
     creada:document.getElementById("m-creada").value||hoy(),
