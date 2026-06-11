@@ -637,6 +637,7 @@ window._fbCall = function(fn){
         <input type="text" id="m-notas" placeholder="Opcional...">
       </div>
     </div>
+    <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">📆 Añadir recordatorio a Google Calendar</button>
     <div class="actions">
       <button class="btn-p" id="btn-guardar" onclick="guardar()">Añadir tarea</button>
       <button class="btn-s" onclick="cerrarModal()">Cancelar</button>
@@ -830,7 +831,7 @@ function focusCard(t,cls){
 function taskItem(t){
   const v=t.limite&&t.limite<hoy();
   return`<div class="task-item${v?" vencida":""}">
-    <div class="tick" onclick="completar(${t.id})">✓</div>
+    <div class="tick" onclick="completar('${t.id}')">✓</div>
     <div class="task-info" onclick="editarTarea('${t.id}')" style="cursor:pointer">
       <div class="task-name">${t.tarea}</div>
       <div class="task-sub">
@@ -874,7 +875,7 @@ function renderHist(){
           <span style="font-size:11px;color:var(--text3)">✓ ${fmt(t.completada)}</span>
         </div>
       </div>
-      <button class="restore-btn" onclick="restaurar(${t.id})">Restaurar</button>
+      <button class="restore-btn" onclick="restaurar('${t.id}')">Restaurar</button>
     </div>`).join("");
 }
 
