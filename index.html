@@ -365,6 +365,7 @@ window._fbCall = function(fn){
         document.getElementById("user-avatar").style.display = user.photoURL ? "block" : "none";
         listenData();
         window._processFbQueue();
+        if(typeof window.pedirPermisoNotifs==="function")setTimeout(window.pedirPermisoNotifs,1500);
       } else {
         uid = null;
         document.getElementById("login-screen").style.display = "flex";
@@ -814,7 +815,7 @@ function renderFocus(){
 
 function focusCard(t,cls){
   return`<div class="focus-card ${cls}" style="margin-bottom:8px">
-    <div class="focus-tick" onclick="completar(${t.id})">✓</div>
+    <div class="focus-tick" onclick="completar('${t.id}')">✓</div>
     <div class="focus-title" onclick="editarTarea('${t.id}')" style="cursor:pointer">${t.tarea}</div>
     <div class="focus-meta">
       ${dpill(t.dept)}${ppill(t.prio)}
@@ -839,7 +840,7 @@ function taskItem(t){
         ${t.repetir?`<span class="time-pill">🔁</span>`:""}
       </div>
     </div>
-    <div class="task-del" onclick="eliminar(${t.id})">×</div>
+    <div class="task-del" onclick="eliminar('${t.id}')">×</div>
   </div>`;
 }
 
@@ -1144,6 +1145,105 @@ function exportarExcel(){
   a.click();
   toast("📊 Exportado");
 }
+
+// ============ RECORDATORIO EN GOOGLE CALENDAR ============
+function abrirCalendarCon(t){
+  const titulo=encodeURIComponent("📋 "+t.tarea);
+  const detalles=encodeURIComponent("Taska · "+(t.dept||"")+" · Prioridad "+(t.prio||"")+(t.notas?"\n"+t.notas:""));
+  let dates;
+  const f=(t.limite||hoy()).replace(/-/g,"");
+  if(t.hora){
+    const hhmm=t.hora.replace(":","")+"00";
+    // Evento de 30 min a la hora indicada
+    const fin=new Date((t.limite||hoy())+"T"+t.hora+":00");
+    fin.setMinutes(fin.getMinutes()+30);
+    const finStr=fin.toISOString().slice(0,10).replace(/-/g,"")+"T"+String(fin.getHours()).padStart(2,"0")+String(fin.getMinutes()).padStart(2,"0")+"00";
+    dates=f+"T"+hhmm+"/"+finStr;
+  } else {
+    // Todo el día
+    const sig=new Date((t.limite||hoy())+"T00:00:00");
+    sig.setDate(sig.getDate()+1);
+    dates=f+"/"+sig.toISOString().slice(0,10).replace(/-/g,"");
+  }
+  const url="https://calendar.google.com/calendar/render?action=TEMPLATE&text="+titulo+"&dates="+dates+"&details="+detalles;
+  window.open(url,"_blank");
+}
+
+function agendarDesdeModal(){
+  const tarea=document.getElementById("m-tarea").value.trim();
+  if(!tarea){toast("Escribe la tarea primero",true);document.getElementById("m-tarea").focus();return;}
+  const t={
+    tarea:tarea,
+    dept:document.getElementById("m-dept").value,
+    prio:document.getElementById("m-prio").value,
+    limite:document.getElementById("m-limite").value,
+    hora:document.getElementById("m-hora").value,
+    notas:document.getElementById("m-notas").value
+  };
+  abrirCalendarCon(t);
+}
+
+// ============ NOTIFICACIONES ============
+let notifsAvisadas=JSON.parse(localStorage.getItem("taska_notifs")||"{}");
+function limpiarAvisosAntiguos(){
+  const h=hoy();
+  Object.keys(notifsAvisadas).forEach(k=>{if(!k.startsWith(h))delete notifsAvisadas[k];});
+  localStorage.setItem("taska_notifs",JSON.stringify(notifsAvisadas));
+}
+function notificar(titulo,cuerpo,tag){
+  if(Notification.permission!=="granted")return;
+  if(navigator.serviceWorker&&navigator.serviceWorker.ready){
+    navigator.serviceWorker.ready.then(reg=>{
+      reg.showNotification(titulo,{body:cuerpo,icon:"icon-192.png",badge:"icon-192.png",tag:tag});
+    }).catch(()=>{try{new Notification(titulo,{body:cuerpo,icon:"icon-192.png"});}catch(e){}});
+  } else {
+    try{new Notification(titulo,{body:cuerpo,icon:"icon-192.png"});}catch(e){}
+  }
+}
+function pedirPermisoNotifs(){
+  if(!("Notification" in window))return;
+  if(Notification.permission==="default"){
+    Notification.requestPermission().then(p=>{
+      if(p==="granted"){toast("🔔 Notificaciones activadas");resumenDelDia();}
+    });
+  } else if(Notification.permission==="granted"){
+    resumenDelDia();
+  }
+}
+let resumenHecho=false;
+function resumenDelDia(){
+  if(resumenHecho)return;
+  resumenHecho=true;
+  setTimeout(()=>{
+    const venc=window.tareas.filter(t=>t.limite&&t.limite<hoy()).length;
+    const paraHoy=window.tareas.filter(t=>t.limite===hoy()).length;
+    if(venc>0||paraHoy>0){
+      let msg=[];
+      if(venc>0)msg.push(venc+" vencida"+(venc>1?"s":""));
+      if(paraHoy>0)msg.push(paraHoy+" para hoy");
+      notificar("Taska 📋",msg.join(" · "),"resumen");
+    }
+  },2000);
+}
+function chequearNotifs(){
+  if(Notification.permission!=="granted")return;
+  const ahora=new Date();
+  const hhmm=String(ahora.getHours()).padStart(2,"0")+":"+String(ahora.getMinutes()).padStart(2,"0");
+  window.tareas.forEach(t=>{
+    if(t.limite===hoy()&&t.hora&&t.hora<=hhmm){
+      const clave=hoy()+"_"+t.id;
+      if(!notifsAvisadas[clave]){
+        notifsAvisadas[clave]=1;
+        localStorage.setItem("taska_notifs",JSON.stringify(notifsAvisadas));
+        notificar("⏰ "+t.tarea,(t.dept||"")+" · "+(t.prio||"")+" · "+t.hora,"tarea-"+t.id);
+      }
+    }
+  });
+}
+window.pedirPermisoNotifs=pedirPermisoNotifs;
+limpiarAvisosAntiguos();
+setInterval(chequearNotifs,60000);
+setTimeout(chequearNotifs,3000);
 
 // Fecha
 document.getElementById("fecha-hoy").textContent=new Date().toLocaleDateString("es-ES",{day:"numeric",month:"short"});
