@@ -591,7 +591,7 @@ window._fbCall = function(fn){
 <div class="overlay" id="modal">
   <div class="modal">
     <div class="modal-drag"></div>
-    <h2>Nueva tarea</h2>
+    <h2 id="modal-titulo">Nueva tarea</h2>
     <div class="field">
       <label>Tarea *</label>
       <input type="text" id="m-tarea" placeholder="¿Qué hay que hacer?">
@@ -620,12 +620,24 @@ window._fbCall = function(fn){
         <input type="time" id="m-hora">
       </div>
     </div>
-    <div class="field">
-      <label>Notas</label>
-      <input type="text" id="m-notas" placeholder="Opcional...">
+    <div class="grid2">
+      <div class="field">
+        <label>Repetir</label>
+        <select id="m-repetir">
+          <option value="">Nunca</option>
+          <option value="diaria">Cada día</option>
+          <option value="semanal">Cada semana</option>
+          <option value="mensual">Cada mes</option>
+          <option value="anual">Cada año</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notas</label>
+        <input type="text" id="m-notas" placeholder="Opcional...">
+      </div>
     </div>
     <div class="actions">
-      <button class="btn-p" onclick="guardar()">Añadir tarea</button>
+      <button class="btn-p" id="btn-guardar" onclick="guardar()">Añadir tarea</button>
       <button class="btn-s" onclick="cerrarModal()">Cancelar</button>
     </div>
   </div>
@@ -786,11 +798,12 @@ function renderFocus(){
 function focusCard(t,cls){
   return`<div class="focus-card ${cls}" style="margin-bottom:8px">
     <div class="focus-tick" onclick="completar(${t.id})">✓</div>
-    <div class="focus-title">${t.tarea}</div>
+    <div class="focus-title" onclick="editarTarea('${t.id}')" style="cursor:pointer">${t.tarea}</div>
     <div class="focus-meta">
       ${dpill(t.dept)}${ppill(t.prio)}
       ${t.hora?`<span class="time-pill ${t.limite===hoy()?"soon":""}">⏰ ${t.hora}</span>`:""}
       ${t.limite?`<span class="time-pill ${t.limite<hoy()?"late":""}">📅 ${fmt(t.limite)}</span>`:""}
+      ${t.repetir?`<span class="time-pill">🔁</span>`:""}
       ${t.notas?`<span style="font-size:11px;color:var(--text3)">${t.notas}</span>`:""}
     </div>
   </div>`;
@@ -800,12 +813,13 @@ function taskItem(t){
   const v=t.limite&&t.limite<hoy();
   return`<div class="task-item${v?" vencida":""}">
     <div class="tick" onclick="completar(${t.id})">✓</div>
-    <div class="task-info">
+    <div class="task-info" onclick="editarTarea('${t.id}')" style="cursor:pointer">
       <div class="task-name">${t.tarea}</div>
       <div class="task-sub">
         ${dpill(t.dept)}${ppill(t.prio)}
         ${t.hora?timepill(t.hora,t.limite):""}
         ${t.limite?`<span class="time-pill ${v?"late":""}">${v?"⚠️ ":"📅 "}${fmt(t.limite)}</span>`:""}
+        ${t.repetir?`<span class="time-pill">🔁</span>`:""}
       </div>
     </div>
     <div class="task-del" onclick="eliminar(${t.id})">×</div>
@@ -961,14 +975,35 @@ function eliminar(id){
   if(window.fbDeleteTarea) window.fbDeleteTarea(String(id));
 }
 
+let editandoId=null;
 function abrirModal(){
+  editandoId=null;
+  document.getElementById("modal-titulo").textContent="Nueva tarea";
+  document.getElementById("btn-guardar").textContent="Añadir tarea";
   document.getElementById("m-tarea").value="";
   document.getElementById("m-notas").value="";
   document.getElementById("m-creada").value=hoy();
   document.getElementById("m-limite").value="";
   document.getElementById("m-hora").value="";
+  document.getElementById("m-repetir").value="";
   document.getElementById("modal").classList.add("show");
   setTimeout(()=>document.getElementById("m-tarea").focus(),150);
+}
+function editarTarea(id){
+  const t=window.tareas.find(x=>String(x.id)===String(id));
+  if(!t)return;
+  editandoId=t.id;
+  document.getElementById("modal-titulo").textContent="Editar tarea";
+  document.getElementById("btn-guardar").textContent="Guardar cambios";
+  document.getElementById("m-tarea").value=t.tarea||"";
+  document.getElementById("m-dept").value=t.dept||"";
+  document.getElementById("m-prio").value=t.prio||"Media";
+  document.getElementById("m-creada").value=t.creada||"";
+  document.getElementById("m-limite").value=t.limite||"";
+  document.getElementById("m-hora").value=t.hora||"";
+  document.getElementById("m-notas").value=t.notas||"";
+  document.getElementById("m-repetir").value=t.repetir||"";
+  document.getElementById("modal").classList.add("show");
 }
 function cerrarModal(){
   document.getElementById("modal").classList.remove("show");
@@ -978,17 +1013,20 @@ function cerrarModal(){
 function guardar(){
   const txt=document.getElementById("m-tarea").value.trim();
   if(!txt){document.getElementById("m-tarea").focus();return;}
-  const t={id:nid++,tarea:txt,
+  const t={id:editandoId!==null?editandoId:nid++,tarea:txt,
     dept:document.getElementById("m-dept").value,
     prio:document.getElementById("m-prio").value,
     creada:document.getElementById("m-creada").value||hoy(),
     limite:document.getElementById("m-limite").value,
     hora:document.getElementById("m-hora").value,
-    notas:document.getElementById("m-notas").value
+    notas:document.getElementById("m-notas").value,
+    repetir:document.getElementById("m-repetir").value
   };
   save();
+  const editando=editandoId!==null;
   window._fbCall(()=>window.fbSaveTarea(t));
-  cerrarModal();toast("✦ Añadida");
+  cerrarModal();toast(editando?"✏️ Actualizada":"✦ Añadida");
+  editandoId=null;
 }
 
 function render(){renderFocus();renderHist();renderDash();renderCal();}
@@ -1054,6 +1092,9 @@ function delDept(i){
   deptsTemp.splice(i,1);renderDeptsLista();
 }
 function guardarDepts(){
+  // Si hay texto escrito sin añadir, lo añade automáticamente
+  const pendiente=document.getElementById("dept-nuevo").value.trim();
+  if(pendiente&&!deptsTemp.includes(pendiente)){deptsTemp.push(pendiente);document.getElementById("dept-nuevo").value="";}
   if(deptsTemp.length===0){toast("Añade al menos uno",true);return;}
   window.userDepts=deptsTemp.slice();
   window._fbCall(()=>window.fbSaveConfig&&window.fbSaveConfig({departamentos:deptsTemp}));
