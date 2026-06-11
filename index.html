@@ -395,6 +395,12 @@ window._fbCall = function(fn){
         tareasLoaded = true;
         tryRender();
       });
+      onSnapshot(doc(db, "users", uid, "config", "app"), snap => {
+        if(snap.exists() && snap.data().departamentos){
+          window.userDepts = snap.data().departamentos;
+          if(typeof window.applyDepts === "function") window.applyDepts();
+        }
+      });
       unsubHist = onSnapshot(collection(db, "users", uid, "historial"), snap => {
         hist = snap.docs.map(d => ({...d.data(), id: d.id}))
           .sort((a,b) => (b.completada||"") > (a.completada||"") ? 1 : -1);
@@ -444,6 +450,10 @@ window._fbCall = function(fn){
       if(!uid) return;
       await deleteDoc(doc(db, "users", uid, "historial", String(id)));
     };
+    window.fbSaveConfig = async (cfg) => {
+      if(!uid) return;
+      await setDoc(doc(db, "users", uid, "config", "app"), cfg);
+    };
   </script>
 </head>
 <body>
@@ -489,7 +499,15 @@ window._fbCall = function(fn){
     <span class="theme-icon" id="theme-icon" onclick="toggleTheme()">🌙</span>
     <img id="user-avatar" src="" style="display:none;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border2)">
     <span id="user-name" style="font-size:12px;color:var(--text3)"></span>
-    <button onclick="fbLogout()" style="font-size:11px;padding:3px 10px;border:1px solid var(--border2);border-radius:20px;background:none;color:var(--text3);cursor:pointer">Salir</button>
+    <div style="position:relative">
+      <button id="menu-btn" onclick="toggleMenu()" style="font-size:16px;padding:3px 8px;border:1px solid var(--border2);border-radius:8px;background:none;color:var(--text2);cursor:pointer">☰</button>
+      <div id="menu-drop" style="display:none;position:absolute;right:0;top:36px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:300;overflow:hidden">
+        <div id="menu-perfil" style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)"></div>
+        <div class="menu-item" onclick="abrirDepts()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">🏷️ Departamentos</div>
+        <div class="menu-item" onclick="exportarExcel()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">📊 Exportar a Excel</div>
+        <div class="menu-item" onclick="fbLogout()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:#f87171;border-top:1px solid var(--border)">🚪 Salir</div>
+      </div>
+    </div>
     <div class="theme-btn" onclick="toggleTheme()"></div>
     <span class="date-pill" id="fecha-hoy"></span>
   </div>
@@ -613,23 +631,54 @@ window._fbCall = function(fn){
   </div>
 </div>
 
+<!-- MODAL DEPARTAMENTOS -->
+<div class="overlay" id="modal-depts">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <h2>🏷️ Departamentos</h2>
+    <div id="depts-lista" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-bottom:14px"></div>
+    <div style="display:flex;gap:8px">
+      <input type="text" id="dept-nuevo" placeholder="Nuevo departamento..." style="flex:1;padding:10px 13px;border:1px solid var(--border2);border-radius:10px;font-size:14px;background:var(--bg3);color:var(--text);outline:none">
+      <button onclick="addDept()" style="padding:10px 16px;background:#059669;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">+</button>
+    </div>
+    <div class="actions">
+      <button class="btn-p" onclick="guardarDepts()" style="background:#059669">Guardar</button>
+      <button class="btn-s" onclick="cerrarDepts()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
-const DEPTS={
-  IT:["rgba(59,130,246,0.15)","#60a5fa","#3b82f6"],
-  Marketing:["rgba(236,72,153,0.15)","#f472b6","#ec4899"],
-  Finanzas:["rgba(16,185,129,0.15)","#34d399","#10b981"],
-  RRHH:["rgba(245,158,11,0.15)","#fbbf24","#f59e0b"],
-  Operaciones:["rgba(139,92,246,0.15)","#a78bfa","#8b5cf6"],
-  Comercial:["rgba(249,115,22,0.15)","#fb923c","#f97316"],
-  "Dirección":["rgba(99,102,241,0.15)","#818cf8","#6366f1"],
-  Mantenimiento:["rgba(239,68,68,0.15)","#f87171","#ef4444"],
-  Cliente:["rgba(6,182,212,0.15)","#22d3ee","#06b6d4"],
-  SDX:["rgba(20,184,166,0.15)","#2dd4bf","#14b8a6"],
-  Personal:["rgba(168,85,247,0.15)","#c084fc","#a855f7"],
-  Otro:["rgba(148,163,184,0.15)","#94a3b8","#64748b"]
-};
+const PALETA=[
+  ["rgba(59,130,246,0.15)","#60a5fa","#3b82f6"],
+  ["rgba(236,72,153,0.15)","#f472b6","#ec4899"],
+  ["rgba(16,185,129,0.15)","#34d399","#10b981"],
+  ["rgba(245,158,11,0.15)","#fbbf24","#f59e0b"],
+  ["rgba(139,92,246,0.15)","#a78bfa","#8b5cf6"],
+  ["rgba(249,115,22,0.15)","#fb923c","#f97316"],
+  ["rgba(99,102,241,0.15)","#818cf8","#6366f1"],
+  ["rgba(239,68,68,0.15)","#f87171","#ef4444"],
+  ["rgba(6,182,212,0.15)","#22d3ee","#06b6d4"],
+  ["rgba(20,184,166,0.15)","#2dd4bf","#14b8a6"],
+  ["rgba(168,85,247,0.15)","#c084fc","#a855f7"],
+  ["rgba(148,163,184,0.15)","#94a3b8","#64748b"]
+];
+const DEPTS_DEFAULT=["IT","Marketing","Finanzas","RRHH","Operaciones","Comercial","Dirección","Mantenimiento","Cliente","SDX","Personal","Otro"];
+let DEPTS={};
+function applyDepts(){
+  const lista=window.userDepts&&window.userDepts.length?window.userDepts:DEPTS_DEFAULT;
+  DEPTS={};
+  lista.forEach((d,i)=>{DEPTS[d]=PALETA[i%PALETA.length];});
+  rebuildDeptSelect();
+  if(typeof render==="function")render();
+}
+window.applyDepts=applyDepts;
+function rebuildDeptSelect(){
+  const md=document.getElementById("m-dept");
+  if(md){md.innerHTML="";Object.keys(DEPTS).forEach(d=>{md.innerHTML+=`<option>${d}</option>`;});}
+}
 const PC={Alta:["rgba(239,68,68,0.15)","#f87171","#ef4444"],Media:["rgba(245,158,11,0.15)","#fbbf24","#f59e0b"],Baja:["rgba(16,185,129,0.15)","#34d399","#10b981"]};
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
@@ -960,8 +1009,83 @@ function toggleTheme(){
 if(localStorage.getItem("gtv2_theme")==="light"){document.body.classList.add("light");document.getElementById("theme-icon").textContent="☀️";}
 
 // Selects
-const md=document.getElementById("m-dept");
-Object.keys(DEPTS).forEach(d=>{md.innerHTML+=`<option>${d}</option>`;});
+applyDepts();
+
+// Menu
+function toggleMenu(){
+  const m=document.getElementById("menu-drop");
+  m.style.display=m.style.display==="none"?"block":"none";
+  const u=document.getElementById("user-name");
+  document.getElementById("menu-perfil").textContent="👤 "+(u?u.textContent:"");
+}
+document.addEventListener("click",e=>{
+  const m=document.getElementById("menu-drop");
+  if(m&&!e.target.closest("#menu-btn")&&!e.target.closest("#menu-drop"))m.style.display="none";
+});
+
+// Departamentos editor
+let deptsTemp=[];
+function abrirDepts(){
+  document.getElementById("menu-drop").style.display="none";
+  deptsTemp=Object.keys(DEPTS).slice();
+  renderDeptsLista();
+  document.getElementById("modal-depts").classList.add("show");
+}
+function cerrarDepts(){document.getElementById("modal-depts").classList.remove("show");}
+function renderDeptsLista(){
+  document.getElementById("depts-lista").innerHTML=deptsTemp.map((d,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--glass);border:1px solid var(--border);border-radius:8px">
+      <span class="dept-pill" style="background:${PALETA[i%PALETA.length][0]};color:${PALETA[i%PALETA.length][1]}">${d}</span>
+      <span style="flex:1"></span>
+      <button onclick="delDept(${i})" style="border:none;background:none;color:var(--text3);cursor:pointer;font-size:15px">×</button>
+    </div>`).join("");
+}
+function addDept(){
+  const inp=document.getElementById("dept-nuevo");
+  const v=inp.value.trim();
+  if(!v)return;
+  if(deptsTemp.includes(v)){toast("Ya existe",true);return;}
+  deptsTemp.push(v);inp.value="";renderDeptsLista();
+}
+function delDept(i){
+  const d=deptsTemp[i];
+  const enUso=window.tareas.some(t=>t.dept===d)||window.hist.some(t=>t.dept===d);
+  if(enUso&&!confirm(`Hay tareas con "${d}". Las tareas mantendrán el nombre pero el departamento no saldrá en la lista. ¿Eliminar?`))return;
+  deptsTemp.splice(i,1);renderDeptsLista();
+}
+function guardarDepts(){
+  if(deptsTemp.length===0){toast("Añade al menos uno",true);return;}
+  window.userDepts=deptsTemp.slice();
+  window._fbCall(()=>window.fbSaveConfig&&window.fbSaveConfig({departamentos:deptsTemp}));
+  applyDepts();
+  cerrarDepts();toast("🏷️ Departamentos guardados");
+}
+document.getElementById("dept-nuevo").addEventListener("keydown",e=>{if(e.key==="Enter")addDept();});
+document.getElementById("modal-depts").addEventListener("click",function(e){if(e.target===this)cerrarDepts();});
+
+// Exportar a Excel (CSV compatible con Excel español)
+function exportarExcel(){
+  document.getElementById("menu-drop").style.display="none";
+  const sep=";";
+  const esc=v=>{v=String(v==null?"":v);return v.includes(sep)||v.includes('"')||v.includes("\n")?'"'+v.replace(/"/g,'""')+'"':v;};
+  let csv="\uFEFF";
+  csv+="MIS TAREAS\r\n";
+  csv+=["Tarea","Departamento","Prioridad","Creada","Límite","Hora","Notas"].join(sep)+"\r\n";
+  window.tareas.forEach(t=>{
+    csv+=[t.tarea,t.dept,t.prio,fmt(t.creada),fmt(t.limite),t.hora||"",t.notas||""].map(esc).join(sep)+"\r\n";
+  });
+  csv+="\r\nHISTORIAL\r\n";
+  csv+=["Tarea","Departamento","Prioridad","Creada","Completada","Notas"].join(sep)+"\r\n";
+  window.hist.forEach(t=>{
+    csv+=[t.tarea,t.dept,t.prio,fmt(t.creada),fmt(t.completada),t.notas||""].map(esc).join(sep)+"\r\n";
+  });
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="taska_"+hoy()+".csv";
+  a.click();
+  toast("📊 Exportado");
+}
 
 // Fecha
 document.getElementById("fecha-hoy").textContent=new Date().toLocaleDateString("es-ES",{day:"numeric",month:"short"});
