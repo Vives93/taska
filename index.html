@@ -624,7 +624,7 @@ window._fbCall = function(fn){
     <div class="grid2">
       <div class="field">
         <label>Repetir</label>
-        <select id="m-repetir">
+        <select id="m-repetir" onchange="document.getElementById('campo-rephasta').style.opacity=this.value?'1':'0.4';document.getElementById('m-rephasta').disabled=!this.value">
           <option value="">Nunca</option>
           <option value="diaria">Cada día</option>
           <option value="semanal">Cada semana</option>
@@ -632,10 +632,14 @@ window._fbCall = function(fn){
           <option value="anual">Cada año</option>
         </select>
       </div>
-      <div class="field">
-        <label>Notas</label>
-        <input type="text" id="m-notas" placeholder="Opcional...">
+      <div class="field" id="campo-rephasta" style="opacity:0.4">
+        <label>Repetir hasta</label>
+        <input type="date" id="m-rephasta" disabled>
       </div>
+    </div>
+    <div class="field">
+      <label>Notas</label>
+      <input type="text" id="m-notas" placeholder="Opcional...">
     </div>
     <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">📆 Añadir recordatorio a Google Calendar</button>
     <div class="actions">
@@ -959,28 +963,68 @@ function renderCal(){
   const off=pd===0?6:pd-1;
   const td=new Date(calA,calM+1,0).getDate();
   const h=hoy();
+  // Proyecciones fantasma de tareas recurrentes para el mes visible
+  const iniMes=calA+"-"+(calM+1).toString().padStart(2,"0")+"-01";
+  const finMes=calA+"-"+(calM+1).toString().padStart(2,"0")+"-"+String(td).padStart(2,"0");
+  const fantasmas={};
+  window.tareas.forEach(t=>{
+    if(!t.repetir||!t.limite)return;
+    let f=t.limite,guard=0;
+    while(guard++<500){
+      f=sumarPeriodo(f,t.repetir);
+      if(t.repetirHasta&&f>t.repetirHasta)break;
+      if(f>finMes)break;
+      if(f>=iniMes){(fantasmas[f]=fantasmas[f]||[]).push(t);}
+    }
+  });
   for(let i=0;i<off;i++){const d=document.createElement("div");d.style.minHeight="68px";grid.appendChild(d);}
   for(let d=1;d<=td;d++){
     const ds2=calA+"-"+(calM+1).toString().padStart(2,"0")+"-"+d.toString().padStart(2,"0");
     const td2=tareas.filter(t=>t.limite===ds2);
+    const gh=fantasmas[ds2]||[];
     const esH=ds2===h;
     const div=document.createElement("div");
-    div.className="cal-day"+(esH?" today":"")+(td2.length>0?" has":"");
-    div.innerHTML=`<div class="cal-num">${d}</div>`+td2.slice(0,2).map(t=>{
-      const c=PC[t.prio];return`<div class="cal-pill" style="background:${c[0]};color:${c[1]}">${t.tarea.substring(0,10)}</div>`;
-    }).join("")+(td2.length>2?`<div style="font-size:9px;color:var(--text3)">+${td2.length-2} más</div>`:"");
-    if(td2.length>0)div.onclick=()=>alert(`${d}/${calM+1}/${calA}:\n\n`+td2.map((t,i)=>`${i+1}. ${t.tarea}${t.hora?" · "+t.hora:""}\n   ${t.dept} · ${t.prio}`).join("\n\n"));
+    div.className="cal-day"+(esH?" today":"")+((td2.length+gh.length)>0?" has":"");
+    const pills=[
+      ...td2.map(t=>({t,ghost:false})),
+      ...gh.map(t=>({t,ghost:true}))
+    ];
+    div.innerHTML=`<div class="cal-num">${d}</div>`+pills.slice(0,2).map(p=>{
+      const c=PC[p.t.prio];
+      return`<div class="cal-pill" style="background:${c[0]};color:${c[1]};${p.ghost?"opacity:0.45":""}">${p.ghost?"🔁 ":""}${p.t.tarea.substring(0,10)}</div>`;
+    }).join("")+(pills.length>2?`<div style="font-size:9px;color:var(--text3)">+${pills.length-2} más</div>`:"");
+    if(pills.length>0)div.onclick=()=>alert(`${d}/${calM+1}/${calA}:\n\n`+pills.map((p,i)=>`${i+1}. ${p.t.tarea}${p.t.hora?" · "+p.t.hora:""}${p.ghost?" (prevista 🔁)":""}\n   ${p.t.dept} · ${p.t.prio}`).join("\n\n"));
     grid.appendChild(div);
   }
 }
 function calCambiar(d){calM+=d;if(calM>11){calM=0;calA++;}if(calM<0){calM=11;calA--;}renderCal();}
 
+function sumarPeriodo(fecha,tipo){
+  const d=fecha?new Date(fecha+"T00:00:00"):new Date();
+  if(tipo==="diaria")d.setDate(d.getDate()+1);
+  else if(tipo==="semanal")d.setDate(d.getDate()+7);
+  else if(tipo==="mensual"){const dia=d.getDate();d.setMonth(d.getMonth()+1);if(d.getDate()!==dia)d.setDate(0);}
+  else if(tipo==="anual")d.setFullYear(d.getFullYear()+1);
+  return d.toISOString().split("T")[0];
+}
 function completar(id){
   const t=tareas.find(x=>String(x.id)===String(id));if(!t)return;
-  t.completada=hoy();
+  const copia={...t,completada:hoy()};
   window._fbCall(()=>window.fbDeleteTarea && window.fbDeleteTarea(id));
-  window._fbCall(()=>window.fbSaveHist && window.fbSaveHist(t));
-  toast("✓ Completada");
+  window._fbCall(()=>window.fbSaveHist && window.fbSaveHist(copia));
+  if(t.repetir){
+    const proxLimite=sumarPeriodo(t.limite||hoy(),t.repetir);
+    if(t.repetirHasta&&proxLimite>t.repetirHasta){
+      toast("✓ Hecha · 🔁 serie finalizada");
+    } else {
+      const siguiente={...t,id:nuevoId(),creada:hoy(),limite:proxLimite};
+      delete siguiente.completada;
+      window._fbCall(()=>window.fbSaveTarea && window.fbSaveTarea(siguiente));
+      toast("✓ Hecha · 🔁 próxima creada");
+    }
+  } else {
+    toast("✓ Completada");
+  }
 }
 function restaurar(id){
   const t=hist.find(x=>String(x.id)===String(id));if(!t)return;
@@ -1005,6 +1049,9 @@ function abrirModal(){
   document.getElementById("m-limite").value="";
   document.getElementById("m-hora").value="";
   document.getElementById("m-repetir").value="";
+  document.getElementById("m-rephasta").value="";
+  document.getElementById("m-rephasta").disabled=true;
+  document.getElementById("campo-rephasta").style.opacity="0.4";
   document.getElementById("modal").classList.add("show");
   setTimeout(()=>document.getElementById("m-tarea").focus(),150);
 }
@@ -1022,6 +1069,9 @@ function editarTarea(id){
   document.getElementById("m-hora").value=t.hora||"";
   document.getElementById("m-notas").value=t.notas||"";
   document.getElementById("m-repetir").value=t.repetir||"";
+  document.getElementById("m-rephasta").value=t.repetirHasta||"";
+  document.getElementById("m-rephasta").disabled=!t.repetir;
+  document.getElementById("campo-rephasta").style.opacity=t.repetir?"1":"0.4";
   document.getElementById("modal").classList.add("show");
 }
 function cerrarModal(){
@@ -1039,7 +1089,8 @@ function guardar(){
     limite:document.getElementById("m-limite").value,
     hora:document.getElementById("m-hora").value,
     notas:document.getElementById("m-notas").value,
-    repetir:document.getElementById("m-repetir").value
+    repetir:document.getElementById("m-repetir").value,
+    repetirHasta:document.getElementById("m-rephasta").value||""
   };
   save();
   const editando=editandoId!==null;
