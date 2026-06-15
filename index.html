@@ -613,7 +613,7 @@ window._fbCall = function(fn){
         <input type="date" id="m-creada">
       </div>
       <div class="field">
-        <label>Límite</label>
+        <label id="lbl-limite">Límite</label>
         <input type="date" id="m-limite">
       </div>
       <div class="field">
@@ -623,18 +623,11 @@ window._fbCall = function(fn){
     </div>
     <div class="grid2">
       <div class="field">
-        <label>Repetir</label>
-        <select id="m-repetir" onchange="document.getElementById('campo-rephasta').style.opacity=this.value?'1':'0.4';document.getElementById('m-rephasta').disabled=!this.value">
-          <option value="">Nunca</option>
-          <option value="diaria">Cada día</option>
-          <option value="semanal">Cada semana</option>
-          <option value="mensual">Cada mes</option>
-          <option value="anual">Cada año</option>
-        </select>
+        <label>Hasta (opcional)</label>
+        <input type="date" id="m-hasta" title="Para tareas que duran varios días">
       </div>
-      <div class="field" id="campo-rephasta" style="opacity:0.4">
-        <label>Repetir hasta</label>
-        <input type="date" id="m-rephasta" disabled>
+      <div class="field" style="display:flex;align-items:flex-end">
+        <span style="font-size:11px;color:var(--text3);padding-bottom:10px">Deja vacío si es de un solo día. Si rellenas, la tarea ocupará todos los días del rango.</span>
       </div>
     </div>
     <div class="field">
@@ -766,9 +759,10 @@ function renderFocus(){
   statsBar("stats-bar");
   const h=hoy();
   const src=filtroActivo?tareas.filter(t=>t.dept===filtroActivo):tareas;
-  const vencidas=src.filter(t=>t.limite&&t.limite<h).sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return p[a.prio]-p[b.prio];});
-  const deHoy=src.filter(t=>t.limite===h).sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return p[a.prio]-p[b.prio];});
-  const resto=src.filter(t=>!t.limite||t.limite>h).sort((a,b)=>{
+  const ord=(a,b)=>{const p={Alta:0,Media:1,Baja:2};return p[a.prio]-p[b.prio];};
+  const vencidas=src.filter(t=>tareaVencida(t)&&!tareaActivaHoy(t)).sort(ord);
+  const deHoy=src.filter(t=>tareaActivaHoy(t)).sort(ord);
+  const resto=src.filter(t=>!tareaVencida(t)&&!tareaActivaHoy(t)&&tareaFutura(t)).sort((a,b)=>{
     const p={Alta:0,Media:1,Baja:2};
     if(p[a.prio]!==p[b.prio])return p[a.prio]-p[b.prio];
     return(a.limite||"9999")>(b.limite||"9999")?1:-1;
@@ -825,15 +819,14 @@ function focusCard(t,cls){
     <div class="focus-meta">
       ${dpill(t.dept)}${ppill(t.prio)}
       ${t.hora?`<span class="time-pill ${t.limite===hoy()?"soon":""}">⏰ ${t.hora}</span>`:""}
-      ${t.limite?`<span class="time-pill ${t.limite<hoy()?"late":""}">📅 ${fmt(t.limite)}</span>`:""}
-      ${t.repetir?`<span class="time-pill">🔁</span>`:""}
+      ${t.limite?`<span class="time-pill ${(t.hasta||t.limite)<hoy()?"late":""}">📅 ${fmt(t.limite)}${t.hasta?" → "+fmt(t.hasta):""}</span>`:""}
       ${t.notas?`<span style="font-size:11px;color:var(--text3)">${t.notas}</span>`:""}
     </div>
   </div>`;
 }
 
 function taskItem(t){
-  const v=t.limite&&t.limite<hoy();
+  const v=tareaVencida(t)&&!tareaActivaHoy(t);
   return`<div class="task-item${v?" vencida":""}">
     <div class="tick" onclick="completar('${t.id}')">✓</div>
     <div class="task-info" onclick="editarTarea('${t.id}')" style="cursor:pointer">
@@ -841,8 +834,7 @@ function taskItem(t){
       <div class="task-sub">
         ${dpill(t.dept)}${ppill(t.prio)}
         ${t.hora?timepill(t.hora,t.limite):""}
-        ${t.limite?`<span class="time-pill ${v?"late":""}">${v?"⚠️ ":"📅 "}${fmt(t.limite)}</span>`:""}
-        ${t.repetir?`<span class="time-pill">🔁</span>`:""}
+        ${t.limite?`<span class="time-pill ${v?"late":""}">${v?"⚠️ ":"📅 "}${fmt(t.limite)}${t.hasta?" → "+fmt(t.hasta):""}</span>`:""}
       </div>
     </div>
     <div class="task-del" onclick="eliminar('${t.id}')">×</div>
@@ -963,42 +955,54 @@ function renderCal(){
   const off=pd===0?6:pd-1;
   const td=new Date(calA,calM+1,0).getDate();
   const h=hoy();
-  // Proyecciones fantasma de tareas recurrentes para el mes visible
-  const iniMes=calA+"-"+(calM+1).toString().padStart(2,"0")+"-01";
-  const finMes=calA+"-"+(calM+1).toString().padStart(2,"0")+"-"+String(td).padStart(2,"0");
-  const fantasmas={};
-  window.tareas.forEach(t=>{
-    if(!t.repetir||!t.limite)return;
-    let f=t.limite,guard=0;
-    while(guard++<500){
-      f=sumarPeriodo(f,t.repetir);
-      if(t.repetirHasta&&f>t.repetirHasta)break;
-      if(f>finMes)break;
-      if(f>=iniMes){(fantasmas[f]=fantasmas[f]||[]).push(t);}
-    }
-  });
   for(let i=0;i<off;i++){const d=document.createElement("div");d.style.minHeight="68px";grid.appendChild(d);}
   for(let d=1;d<=td;d++){
     const ds2=calA+"-"+(calM+1).toString().padStart(2,"0")+"-"+d.toString().padStart(2,"0");
-    const td2=tareas.filter(t=>t.limite===ds2);
-    const gh=fantasmas[ds2]||[];
+    // Tareas activas ese día: las de un día (limite===ds2) o las de rango (limite<=ds2<=hasta)
+    const td2=tareas.filter(t=>enRango(t,ds2));
     const esH=ds2===h;
     const div=document.createElement("div");
-    div.className="cal-day"+(esH?" today":"")+((td2.length+gh.length)>0?" has":"");
-    const pills=[
-      ...td2.map(t=>({t,ghost:false})),
-      ...gh.map(t=>({t,ghost:true}))
-    ];
-    div.innerHTML=`<div class="cal-num">${d}</div>`+pills.slice(0,2).map(p=>{
-      const c=PC[p.t.prio];
-      return`<div class="cal-pill" style="background:${c[0]};color:${c[1]};${p.ghost?"opacity:0.45":""}">${p.ghost?"🔁 ":""}${p.t.tarea.substring(0,10)}</div>`;
-    }).join("")+(pills.length>2?`<div style="font-size:9px;color:var(--text3)">+${pills.length-2} más</div>`:"");
-    if(pills.length>0)div.onclick=()=>alert(`${d}/${calM+1}/${calA}:\n\n`+pills.map((p,i)=>`${i+1}. ${p.t.tarea}${p.t.hora?" · "+p.t.hora:""}${p.ghost?" (prevista 🔁)":""}\n   ${p.t.dept} · ${p.t.prio}`).join("\n\n"));
+    div.className="cal-day"+(esH?" today":"")+(td2.length>0?" has":"");
+    div.innerHTML=`<div class="cal-num">${d}</div>`+td2.slice(0,3).map(t=>{
+      const c=PC[t.prio];
+      const esRango=t.hasta&&t.limite&&t.hasta!==t.limite;
+      let radius="6px", margin="0 0 2px";
+      if(esRango){
+        const ini=t.limite===ds2, fin=t.hasta===ds2;
+        // barra continua: cuadra las esquinas en el interior del rango
+        radius=(ini?"6px":"0")+" "+(fin?"6px":"0")+" "+(fin?"6px":"0")+" "+(ini?"6px":"0");
+        margin="0 -6px 2px"; // se extiende hasta los bordes de la celda
+      }
+      return`<div class="cal-pill" style="background:${c[0]};color:${c[1]};border-radius:${radius};margin:${margin}">${(t.limite===ds2||!t.hasta)?t.tarea.substring(0,10):"&nbsp;"}</div>`;
+    }).join("")+(td2.length>3?`<div style="font-size:9px;color:var(--text3)">+${td2.length-3} más</div>`:"");
+    if(td2.length>0)div.onclick=()=>alert(`${d}/${calM+1}/${calA}:\n\n`+td2.map((t,i)=>`${i+1}. ${t.tarea}${t.hora?" · "+t.hora:""}${(t.hasta&&t.hasta!==t.limite)?" ("+fmt(t.limite)+" → "+fmt(t.hasta)+")":""}\n   ${t.dept} · ${t.prio}`).join("\n\n"));
     grid.appendChild(div);
   }
 }
 function calCambiar(d){calM+=d;if(calM>11){calM=0;calA++;}if(calM<0){calM=11;calA--;}renderCal();}
 
+function enRango(t,dia){
+  // dia = "YYYY-MM-DD". True si la tarea (con o sin rango) cae ese día.
+  if(t.hasta && t.limite){
+    return dia>=t.limite && dia<=t.hasta;
+  }
+  return t.limite===dia;
+}
+function tareaActivaHoy(t){
+  const h=hoy();
+  if(t.hasta && t.limite) return t.limite<=h && t.hasta>=h; // dentro del rango hoy
+  return t.limite===h;
+}
+function tareaVencida(t){
+  const h=hoy();
+  const fin=t.hasta||t.limite;
+  return fin && fin<h;
+}
+function tareaFutura(t){
+  const h=hoy();
+  if(!t.limite) return true; // sin fecha => próximas
+  return t.limite>h; // empieza después de hoy
+}
 function sumarPeriodo(fecha,tipo){
   const d=fecha?new Date(fecha+"T00:00:00"):new Date();
   if(tipo==="diaria")d.setDate(d.getDate()+1);
@@ -1012,19 +1016,7 @@ function completar(id){
   const copia={...t,completada:hoy()};
   window._fbCall(()=>window.fbDeleteTarea && window.fbDeleteTarea(id));
   window._fbCall(()=>window.fbSaveHist && window.fbSaveHist(copia));
-  if(t.repetir){
-    const proxLimite=sumarPeriodo(t.limite||hoy(),t.repetir);
-    if(t.repetirHasta&&proxLimite>t.repetirHasta){
-      toast("✓ Hecha · 🔁 serie finalizada");
-    } else {
-      const siguiente={...t,id:nuevoId(),creada:hoy(),limite:proxLimite};
-      delete siguiente.completada;
-      window._fbCall(()=>window.fbSaveTarea && window.fbSaveTarea(siguiente));
-      toast("✓ Hecha · 🔁 próxima creada");
-    }
-  } else {
-    toast("✓ Completada");
-  }
+  toast("✓ Completada");
 }
 function restaurar(id){
   const t=hist.find(x=>String(x.id)===String(id));if(!t)return;
@@ -1048,10 +1040,8 @@ function abrirModal(){
   document.getElementById("m-creada").value=hoy();
   document.getElementById("m-limite").value="";
   document.getElementById("m-hora").value="";
-  document.getElementById("m-repetir").value="";
-  document.getElementById("m-rephasta").value="";
-  document.getElementById("m-rephasta").disabled=true;
-  document.getElementById("campo-rephasta").style.opacity="0.4";
+  document.getElementById("m-hasta").value="";
+  document.getElementById("lbl-limite").textContent="Límite";
   document.getElementById("modal").classList.add("show");
   setTimeout(()=>document.getElementById("m-tarea").focus(),150);
 }
@@ -1068,10 +1058,8 @@ function editarTarea(id){
   document.getElementById("m-limite").value=t.limite||"";
   document.getElementById("m-hora").value=t.hora||"";
   document.getElementById("m-notas").value=t.notas||"";
-  document.getElementById("m-repetir").value=t.repetir||"";
-  document.getElementById("m-rephasta").value=t.repetirHasta||"";
-  document.getElementById("m-rephasta").disabled=!t.repetir;
-  document.getElementById("campo-rephasta").style.opacity=t.repetir?"1":"0.4";
+  document.getElementById("m-hasta").value=t.hasta||"";
+  document.getElementById("lbl-limite").textContent=t.hasta?"Desde":"Límite";
   document.getElementById("modal").classList.add("show");
 }
 function cerrarModal(){
@@ -1082,6 +1070,10 @@ function cerrarModal(){
 function guardar(){
   const txt=document.getElementById("m-tarea").value.trim();
   if(!txt){document.getElementById("m-tarea").focus();return;}
+  const hastaVal=document.getElementById("m-hasta").value||"";
+  const limVal=document.getElementById("m-limite").value||"";
+  if(hastaVal&&limVal&&hastaVal<limVal){toast("'Hasta' no puede ser antes de la fecha inicial",true);return;}
+  if(hastaVal&&!limVal){toast("Pon una fecha inicial para el rango",true);return;}
   const t={id:editandoId!==null?editandoId:nuevoId(),tarea:txt,
     dept:document.getElementById("m-dept").value,
     prio:document.getElementById("m-prio").value,
@@ -1089,8 +1081,7 @@ function guardar(){
     limite:document.getElementById("m-limite").value,
     hora:document.getElementById("m-hora").value,
     notas:document.getElementById("m-notas").value,
-    repetir:document.getElementById("m-repetir").value,
-    repetirHasta:document.getElementById("m-rephasta").value||""
+    hasta:document.getElementById("m-hasta").value||""
   };
   save();
   const editando=editandoId!==null;
@@ -1306,6 +1297,9 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape")cerrarModal();
 });
 document.getElementById("modal").addEventListener("click",function(e){if(e.target===this)cerrarModal();});
+document.getElementById("m-hasta").addEventListener("change",function(){
+  document.getElementById("lbl-limite").textContent=this.value?"Desde":"Límite";
+});
 document.addEventListener("click",function(e){
   if(e.target&&e.target.id==="btn-empty-add"){abrirModal();}
 });
