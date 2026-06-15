@@ -605,32 +605,26 @@ window._fbCall = function(fn){
   <div class="modal">
     <div class="modal-drag"></div>
     <h2 id="modal-titulo">Nueva tarea</h2>
-    <div style="display:flex;gap:8px;margin-bottom:16px">
+
+    <!-- ===== CAPTURA RÁPIDA (siempre visible) ===== -->
+    <div class="field">
+      <input type="text" id="m-tarea" placeholder="¿Qué hay que hacer?" style="font-size:15px">
+    </div>
+
+    <!-- Selector tipo (solo visible al expandir) -->
+    <div id="tipo-selector" style="display:none;gap:8px;margin-bottom:14px">
       <button type="button" id="tipo-tarea" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">📝 Tarea</button>
       <button type="button" id="tipo-evento" onclick="setTipo('evento')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">🗓️ Evento</button>
     </div>
-    <div class="field">
-      <label>Tarea *</label>
-      <input type="text" id="m-tarea" placeholder="¿Qué hay que hacer?">
-    </div>
-    <div class="grid2">
-      <div class="field">
-        <label>Departamento</label>
-        <select id="m-dept"></select>
-      </div>
-      <div class="field">
-        <label>Prioridad</label>
-        <select id="m-prio"><option>Alta</option><option selected>Media</option><option>Baja</option></select>
-      </div>
-    </div>
-    <!-- Campos de TAREA -->
+
+    <!-- Campos de TAREA: fecha+hora visibles -->
     <div class="grid3" id="bloque-tarea">
-      <div class="field">
+      <div class="field" id="campo-creada" style="display:none">
         <label>Creación</label>
         <input type="date" id="m-creada">
       </div>
       <div class="field">
-        <label id="lbl-limite">Límite</label>
+        <label id="lbl-limite">Fecha</label>
         <input type="date" id="m-limite">
       </div>
       <div class="field">
@@ -649,11 +643,31 @@ window._fbCall = function(fn){
         <input type="date" id="m-hasta">
       </div>
     </div>
-    <div class="field">
-      <label>Notas</label>
-      <input type="text" id="m-notas" placeholder="Opcional...">
+
+    <!-- ===== MÁS OPCIONES (plegable) ===== -->
+    <button type="button" id="btn-mas" onclick="toggleMas()" style="width:100%;padding:9px;margin:4px 0;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text3);cursor:pointer">➕ Más opciones</button>
+    <div id="mas-opciones" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button type="button" id="tipo-tarea-2" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">📝 Tarea</button>
+        <button type="button" id="tipo-evento-2" onclick="setTipo('evento')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">🗓️ Evento</button>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>Departamento</label>
+          <select id="m-dept"></select>
+        </div>
+        <div class="field">
+          <label>Prioridad</label>
+          <select id="m-prio"><option value="">Sin prioridad</option><option>Alta</option><option>Media</option><option>Baja</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Notas</label>
+        <input type="text" id="m-notas" placeholder="Opcional...">
+      </div>
+      <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">📆 Añadir recordatorio a Google Calendar</button>
     </div>
-    <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">📆 Añadir recordatorio a Google Calendar</button>
+
     <div class="actions">
       <button class="btn-p" id="btn-guardar" onclick="guardar()">Añadir tarea</button>
       <button class="btn-s" onclick="cerrarModal()">Cancelar</button>
@@ -728,9 +742,10 @@ const PALETA=[
 const DEPTS_DEFAULT=["IT","Marketing","Finanzas","RRHH","Operaciones","Comercial","Dirección","Mantenimiento","Cliente","SDX","Personal","Otro"];
 let DEPTS={};
 function applyDepts(){
-  const lista=window.userDepts&&window.userDepts.length?window.userDepts:DEPTS_DEFAULT;
+  let lista=window.userDepts&&window.userDepts.length?window.userDepts.slice():DEPTS_DEFAULT.slice();
+  if(!lista.includes("Sin clasificar"))lista.push("Sin clasificar");
   DEPTS={};
-  lista.forEach((d,i)=>{DEPTS[d]=PALETA[i%PALETA.length];});
+  lista.forEach((d,i)=>{DEPTS[d]=d==="Sin clasificar"?["rgba(148,163,184,0.15)","#94a3b8","#64748b"]:PALETA[i%PALETA.length];});
   rebuildDeptSelect();
   if(typeof render==="function")render();
 }
@@ -739,7 +754,7 @@ function rebuildDeptSelect(){
   const md=document.getElementById("m-dept");
   if(md){md.innerHTML="";Object.keys(DEPTS).forEach(d=>{md.innerHTML+=`<option>${d}</option>`;});}
 }
-const PC={Alta:["rgba(239,68,68,0.15)","#f87171","#ef4444"],Media:["rgba(245,158,11,0.15)","#fbbf24","#f59e0b"],Baja:["rgba(16,185,129,0.15)","#34d399","#10b981"]};
+const PC={Alta:["rgba(239,68,68,0.15)","#f87171","#ef4444"],Media:["rgba(245,158,11,0.15)","#fbbf24","#f59e0b"],Baja:["rgba(16,185,129,0.15)","#34d399","#10b981"],"":["rgba(148,163,184,0.15)","#94a3b8","#64748b"]};
 const MESES=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 tareas=[];
@@ -755,7 +770,10 @@ function hoy(){return new Date().toISOString().split("T")[0]}
 function fmt(d){if(!d)return"-";const p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
 function ds(d){const c=DEPTS[d]||DEPTS.Otro;return`background:${c[0]};color:${c[1]}`}
 function dpill(d){return`<span class="dept-pill" style="${ds(d)}">${d}</span>`}
-function ppill(p){return`<span class="prio ${p}">${p}</span>`}
+function ppill(p){
+  if(!p)return`<span class="prio" style="background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.2)">—</span>`;
+  return`<span class="prio ${p}">${p}</span>`;
+}
 function timepill(t,limite){
   if(!t)return"";
   const cls=limite&&limite<hoy()?"late":limite&&limite===hoy()?"soon":"";
@@ -808,12 +826,13 @@ function renderFocus(){
   statsBar("stats-bar");
   const h=hoy();
   const src=filtroActivo?tareas.filter(t=>t.dept===filtroActivo):tareas;
-  const ord=(a,b)=>{const p={Alta:0,Media:1,Baja:2};return p[a.prio]-p[b.prio];};
+  const ordP={Alta:0,Media:1,Baja:2,"":3,undefined:3};
+  const ord=(a,b)=>(ordP[a.prio]??3)-(ordP[b.prio]??3);
   const vencidas=src.filter(t=>tareaVencida(t)&&!tareaActivaHoy(t)).sort(ord);
   const deHoy=src.filter(t=>tareaActivaHoy(t)).sort(ord);
   const resto=src.filter(t=>!tareaVencida(t)&&!tareaActivaHoy(t)&&tareaFutura(t)).sort((a,b)=>{
-    const p={Alta:0,Media:1,Baja:2};
-    if(p[a.prio]!==p[b.prio])return p[a.prio]-p[b.prio];
+    const p={Alta:0,Media:1,Baja:2,"":3};
+    if((p[a.prio]??3)!==(p[b.prio]??3))return (p[a.prio]??3)-(p[b.prio]??3);
     return(a.limite||"9999")>(b.limite||"9999")?1:-1;
   });
 
@@ -902,7 +921,7 @@ function renderTodas(){
     depts.map(d=>`<div class="filter-chip ${filtroActivo===d?'active':''}" onclick="setFiltro('${d}')">${d}</div>`).join("");
   
   const lista=filtroActivo?tareas.filter(t=>t.dept===filtroActivo):tareas;
-  const sorted=lista.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2};return p[a.prio]-p[b.prio];});
+  const sorted=lista.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2,"":3};return (p[a.prio]??3)-(p[b.prio]??3);});
   document.getElementById("lista-todas").innerHTML=sorted.length===0
     ?'<div class="empty"><div class="empty-icon">✨</div>No hay tareas</div>'
     :sorted.map(t=>taskItem(t)).join("");
@@ -945,11 +964,11 @@ function renderDash(){
       </span>
     </div>`;}).join("")||'<div class="empty">Sin datos</div>';
 
-  const prios={Alta:0,Media:0,Baja:0};todas.forEach(t=>{prios[t.prio]=(prios[t.prio]||0)+1;});
+  const prios={Alta:0,Media:0,Baja:0,"":0};todas.forEach(t=>{prios[t.prio||""]=(prios[t.prio||""]||0)+1;});
   const maxP=Math.max(...Object.values(prios),1);
-  document.getElementById("dash-prio").innerHTML=["Alta","Media","Baja"].map(p=>`
+  document.getElementById("dash-prio").innerHTML=["Alta","Media","Baja",""].filter(p=>prios[p]>0).map(p=>`
     <div class="dash-row">
-      <span class="prio ${p}" style="min-width:50px;text-align:center">${p}</span>
+      <span class="prio ${p}" style="min-width:50px;text-align:center;${!p?"background:rgba(148,163,184,0.15);color:#94a3b8":""}">${p||"Sin prio."}</span>
       <div class="bar-wrap"><div class="bar" style="width:${Math.round(prios[p]/maxP*100)}%;background:${PC[p][2]}"></div></div>
       <span style="font-weight:700;min-width:18px;text-align:right;font-size:13px">${prios[p]}</span>
     </div>`).join("");
@@ -1089,13 +1108,22 @@ function setTipo(tipo){
   const esT=tipo==="tarea";
   document.getElementById("bloque-tarea").style.display=esT?"grid":"none";
   document.getElementById("bloque-evento").style.display=esT?"none":"grid";
-  const bt=document.getElementById("tipo-tarea"), be=document.getElementById("tipo-evento");
-  bt.style.borderColor=esT?"var(--accent)":"var(--border2)";
-  bt.style.background=esT?"rgba(59,130,246,0.12)":"none";
-  bt.style.color=esT?"var(--accent)":"var(--text2)";
-  be.style.borderColor=!esT?"#a855f7":"var(--border2)";
-  be.style.background=!esT?"rgba(168,85,247,0.12)":"none";
-  be.style.color=!esT?"#c084fc":"var(--text2)";
+  ["","-2"].forEach(suf=>{
+    const bt=document.getElementById("tipo-tarea"+suf), be=document.getElementById("tipo-evento"+suf);
+    if(!bt||!be)return;
+    bt.style.borderColor=esT?"var(--accent)":"var(--border2)";
+    bt.style.background=esT?"rgba(59,130,246,0.12)":"none";
+    bt.style.color=esT?"var(--accent)":"var(--text2)";
+    be.style.borderColor=!esT?"#a855f7":"var(--border2)";
+    be.style.background=!esT?"rgba(168,85,247,0.12)":"none";
+    be.style.color=!esT?"#c084fc":"var(--text2)";
+  });
+}
+let masAbierto=false;
+function toggleMas(){
+  masAbierto=!masAbierto;
+  document.getElementById("mas-opciones").style.display=masAbierto?"block":"none";
+  document.getElementById("btn-mas").textContent=masAbierto?"➖ Menos opciones":"➕ Más opciones";
 }
 function abrirModal(){
   editandoId=null;
@@ -1108,6 +1136,14 @@ function abrirModal(){
   document.getElementById("m-hora").value="";
   document.getElementById("m-desde").value=hoy();
   document.getElementById("m-hasta").value="";
+  document.getElementById("m-prio").value="";
+  // Departamento por defecto: Sin clasificar
+  const md=document.getElementById("m-dept");
+  if([...md.options].some(o=>o.value==="Sin clasificar"))md.value="Sin clasificar";
+  // Plegar "Más opciones"
+  masAbierto=false;
+  document.getElementById("mas-opciones").style.display="none";
+  document.getElementById("btn-mas").textContent="➕ Más opciones";
   setTipo("tarea");
   document.getElementById("modal").classList.add("show");
   setTimeout(()=>document.getElementById("m-tarea").focus(),150);
@@ -1120,10 +1156,14 @@ function editarTarea(id){
   document.getElementById("btn-guardar").textContent="Guardar cambios";
   document.getElementById("m-tarea").value=t.tarea||"";
   document.getElementById("m-dept").value=t.dept||"";
-  document.getElementById("m-prio").value=t.prio||"Media";
+  document.getElementById("m-prio").value=t.prio||"";
   document.getElementById("m-creada").value=t.creada||"";
   document.getElementById("m-hora").value=t.hora||"";
   document.getElementById("m-notas").value=t.notas||"";
+  // Al editar, abrir "Más opciones" para ver todo
+  masAbierto=true;
+  document.getElementById("mas-opciones").style.display="block";
+  document.getElementById("btn-mas").textContent="➖ Menos opciones";
   if(t.hasta){
     setTipo("evento");
     document.getElementById("m-desde").value=t.limite||"";
@@ -1154,7 +1194,7 @@ function guardar(){
     hasta=""; hora=document.getElementById("m-hora").value;
   }
   const t={id:editandoId!==null?editandoId:nuevoId(),tarea:txt,
-    dept:document.getElementById("m-dept").value,
+    dept:document.getElementById("m-dept").value||"Sin clasificar",
     prio:document.getElementById("m-prio").value,
     creada:document.getElementById("m-creada").value||hoy(),
     limite:limite,
@@ -1214,13 +1254,13 @@ document.getElementById("modal-ayuda").addEventListener("click",function(e){if(e
 let deptsTemp=[];
 function abrirDepts(){
   document.getElementById("menu-drop").style.display="none";
-  deptsTemp=Object.keys(DEPTS).slice();
+  deptsTemp=Object.keys(DEPTS).filter(d=>d!=="Sin clasificar");
   renderDeptsLista();
   document.getElementById("modal-depts").classList.add("show");
 }
 function cerrarDepts(){document.getElementById("modal-depts").classList.remove("show");}
 function renderDeptsLista(){
-  document.getElementById("depts-lista").innerHTML=deptsTemp.map((d,i)=>`
+  document.getElementById("depts-lista").innerHTML=`<div style="font-size:11px;color:var(--text3);padding:0 2px 6px">"Sin clasificar" se usa por defecto y siempre está disponible.</div>`+deptsTemp.map((d,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--glass);border:1px solid var(--border);border-radius:8px">
       <span class="dept-pill" style="background:${PALETA[i%PALETA.length][0]};color:${PALETA[i%PALETA.length][1]}">${d}</span>
       <span style="flex:1"></span>
@@ -1245,8 +1285,9 @@ function guardarDepts(){
   const pendiente=document.getElementById("dept-nuevo").value.trim();
   if(pendiente&&!deptsTemp.includes(pendiente)){deptsTemp.push(pendiente);document.getElementById("dept-nuevo").value="";}
   if(deptsTemp.length===0){toast("Añade al menos uno",true);return;}
-  window.userDepts=deptsTemp.slice();
-  window._fbCall(()=>window.fbSaveConfig&&window.fbSaveConfig({departamentos:deptsTemp}));
+  const limpio=deptsTemp.filter(d=>d!=="Sin clasificar");
+  window.userDepts=limpio.slice();
+  window._fbCall(()=>window.fbSaveConfig&&window.fbSaveConfig({departamentos:limpio}));
   applyDepts();
   cerrarDepts();toast("🏷️ Departamentos guardados");
 }
