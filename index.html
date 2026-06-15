@@ -326,7 +326,7 @@ window._fbCall = function(fn){
   <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
     import { getAuth, signInWithPopup, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -339,7 +339,17 @@ window._fbCall = function(fn){
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+    // Firestore con caché local persistente (modo offline)
+    let db;
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+      });
+    } catch(e) {
+      console.warn("Persistencia no disponible, usando memoria:", e);
+      const { getFirestore } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+      db = getFirestore(app);
+    }
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
 
@@ -506,10 +516,12 @@ window._fbCall = function(fn){
         <div id="menu-perfil" style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)"></div>
         <div class="menu-item" onclick="abrirDepts()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">🏷️ Departamentos</div>
         <div class="menu-item" onclick="exportarExcel()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">📊 Exportar a Excel</div>
+        <div class="menu-item" onclick="abrirAyuda()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">⚡ Modo offline</div>
         <div class="menu-item" onclick="fbLogout()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:#f87171;border-top:1px solid var(--border)">🚪 Salir</div>
       </div>
     </div>
     <div class="theme-btn" onclick="toggleTheme()"></div>
+    <span class="date-pill" id="offline-pill" style="display:none;background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.3)">⚡ Sin conexión</span>
     <span class="date-pill" id="fecha-hoy"></span>
   </div>
 </div>
@@ -662,6 +674,36 @@ window._fbCall = function(fn){
     <div class="actions">
       <button class="btn-p" onclick="guardarDepts()" style="background:#059669">Guardar</button>
       <button class="btn-s" onclick="cerrarDepts()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AYUDA OFFLINE -->
+<div class="overlay" id="modal-ayuda">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <h2>⚡ Cómo funciona sin conexión</h2>
+    <div style="font-size:13.5px;color:var(--text2);line-height:1.6">
+      <p style="margin-bottom:12px">Taska guarda una copia de tus tareas en este dispositivo, así que puedes seguir trabajando aunque te quedes sin internet.</p>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <span style="font-size:18px">✅</span>
+        <div><b style="color:var(--text)">Sin conexión puedes:</b><br>ver, crear, editar y completar tareas con normalidad.</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <span style="font-size:18px">🔄</span>
+        <div><b style="color:var(--text)">Al volver internet:</b><br>todo se sincroniza solo con la nube y con tus otros dispositivos.</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:10px">
+        <span style="font-size:18px">⚡</span>
+        <div><b style="color:var(--text)">Aviso visible:</b><br>cuando no haya conexión verás <span style="background:rgba(245,158,11,0.15);color:#fbbf24;padding:1px 7px;border-radius:10px;font-size:11px">⚡ Sin conexión</span> arriba.</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:4px">
+        <span style="font-size:18px">📶</span>
+        <div><b style="color:var(--text)">Importante:</b><br>la primera vez en un dispositivo nuevo sí necesitas conexión para iniciar sesión y cargar tus datos.</div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn-p" onclick="cerrarAyuda()" style="background:#059669">Entendido</button>
     </div>
   </div>
 </div>
@@ -1160,6 +1202,14 @@ document.addEventListener("click",e=>{
   if(m&&!e.target.closest("#menu-btn")&&!e.target.closest("#menu-drop"))m.style.display="none";
 });
 
+// Ayuda offline
+function abrirAyuda(){
+  document.getElementById("menu-drop").style.display="none";
+  document.getElementById("modal-ayuda").classList.add("show");
+}
+function cerrarAyuda(){document.getElementById("modal-ayuda").classList.remove("show");}
+document.getElementById("modal-ayuda").addEventListener("click",function(e){if(e.target===this)cerrarAyuda();});
+
 // Departamentos editor
 let deptsTemp=[];
 function abrirDepts(){
@@ -1325,6 +1375,15 @@ window.pedirPermisoNotifs=pedirPermisoNotifs;
 limpiarAvisosAntiguos();
 setInterval(chequearNotifs,60000);
 setTimeout(chequearNotifs,3000);
+
+// Indicador de conexión
+function actualizarConexion(){
+  const pill=document.getElementById("offline-pill");
+  if(pill)pill.style.display=navigator.onLine?"none":"inline-block";
+}
+window.addEventListener("online",()=>{actualizarConexion();toast("✓ Conexión restaurada");});
+window.addEventListener("offline",()=>{actualizarConexion();toast("⚡ Sin conexión — los cambios se guardan local",true);});
+actualizarConexion();
 
 // Fecha
 document.getElementById("fecha-hoy").textContent=new Date().toLocaleDateString("es-ES",{day:"numeric",month:"short"});
