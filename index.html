@@ -593,6 +593,10 @@ window._fbCall = function(fn){
   <div class="modal">
     <div class="modal-drag"></div>
     <h2 id="modal-titulo">Nueva tarea</h2>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button type="button" id="tipo-tarea" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">📝 Tarea</button>
+      <button type="button" id="tipo-evento" onclick="setTipo('evento')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">🗓️ Evento</button>
+    </div>
     <div class="field">
       <label>Tarea *</label>
       <input type="text" id="m-tarea" placeholder="¿Qué hay que hacer?">
@@ -607,7 +611,8 @@ window._fbCall = function(fn){
         <select id="m-prio"><option>Alta</option><option selected>Media</option><option>Baja</option></select>
       </div>
     </div>
-    <div class="grid3">
+    <!-- Campos de TAREA -->
+    <div class="grid3" id="bloque-tarea">
       <div class="field">
         <label>Creación</label>
         <input type="date" id="m-creada">
@@ -621,13 +626,15 @@ window._fbCall = function(fn){
         <input type="time" id="m-hora">
       </div>
     </div>
-    <div class="grid2">
+    <!-- Campos de EVENTO -->
+    <div class="grid2" id="bloque-evento" style="display:none">
       <div class="field">
-        <label>Hasta (opcional)</label>
-        <input type="date" id="m-hasta" title="Para tareas que duran varios días">
+        <label>Desde</label>
+        <input type="date" id="m-desde">
       </div>
-      <div class="field" style="display:flex;align-items:flex-end">
-        <span style="font-size:11px;color:var(--text3);padding-bottom:10px">Deja vacío si es de un solo día. Si rellenas, la tarea ocupará todos los días del rango.</span>
+      <div class="field">
+        <label>Hasta</label>
+        <input type="date" id="m-hasta">
       </div>
     </div>
     <div class="field">
@@ -813,9 +820,11 @@ function renderFocus(){
 }
 
 function focusCard(t,cls){
-  return`<div class="focus-card ${cls}" style="margin-bottom:8px">
+  const esEvento=!!t.hasta;
+  const estiloEv=esEvento?"border-left:3px solid #a855f7;":"";
+  return`<div class="focus-card ${cls}" style="margin-bottom:8px;${estiloEv}">
     <div class="focus-tick" onclick="completar('${t.id}')">✓</div>
-    <div class="focus-title" onclick="editarTarea('${t.id}')" style="cursor:pointer">${t.tarea}</div>
+    <div class="focus-title" onclick="editarTarea('${t.id}')" style="cursor:pointer">${esEvento?"🗓️ ":""}${t.tarea}</div>
     <div class="focus-meta">
       ${dpill(t.dept)}${ppill(t.prio)}
       ${t.hora?`<span class="time-pill ${t.limite===hoy()?"soon":""}">⏰ ${t.hora}</span>`:""}
@@ -827,10 +836,11 @@ function focusCard(t,cls){
 
 function taskItem(t){
   const v=tareaVencida(t)&&!tareaActivaHoy(t);
-  return`<div class="task-item${v?" vencida":""}">
+  const esEvento=!!t.hasta;
+  return`<div class="task-item${v?" vencida":""}" style="${esEvento?"border-left:3px solid #a855f7":""}">
     <div class="tick" onclick="completar('${t.id}')">✓</div>
     <div class="task-info" onclick="editarTarea('${t.id}')" style="cursor:pointer">
-      <div class="task-name">${t.tarea}</div>
+      <div class="task-name">${esEvento?"🗓️ ":""}${t.tarea}</div>
       <div class="task-sub">
         ${dpill(t.dept)}${ppill(t.prio)}
         ${t.hora?timepill(t.hora,t.limite):""}
@@ -1031,6 +1041,20 @@ function eliminar(id){
 }
 
 let editandoId=null;
+let tipoActual="tarea";
+function setTipo(tipo){
+  tipoActual=tipo;
+  const esT=tipo==="tarea";
+  document.getElementById("bloque-tarea").style.display=esT?"grid":"none";
+  document.getElementById("bloque-evento").style.display=esT?"none":"grid";
+  const bt=document.getElementById("tipo-tarea"), be=document.getElementById("tipo-evento");
+  bt.style.borderColor=esT?"var(--accent)":"var(--border2)";
+  bt.style.background=esT?"rgba(59,130,246,0.12)":"none";
+  bt.style.color=esT?"var(--accent)":"var(--text2)";
+  be.style.borderColor=!esT?"#a855f7":"var(--border2)";
+  be.style.background=!esT?"rgba(168,85,247,0.12)":"none";
+  be.style.color=!esT?"#c084fc":"var(--text2)";
+}
 function abrirModal(){
   editandoId=null;
   document.getElementById("modal-titulo").textContent="Nueva tarea";
@@ -1040,8 +1064,9 @@ function abrirModal(){
   document.getElementById("m-creada").value=hoy();
   document.getElementById("m-limite").value="";
   document.getElementById("m-hora").value="";
+  document.getElementById("m-desde").value=hoy();
   document.getElementById("m-hasta").value="";
-  document.getElementById("lbl-limite").textContent="Límite";
+  setTipo("tarea");
   document.getElementById("modal").classList.add("show");
   setTimeout(()=>document.getElementById("m-tarea").focus(),150);
 }
@@ -1055,11 +1080,16 @@ function editarTarea(id){
   document.getElementById("m-dept").value=t.dept||"";
   document.getElementById("m-prio").value=t.prio||"Media";
   document.getElementById("m-creada").value=t.creada||"";
-  document.getElementById("m-limite").value=t.limite||"";
   document.getElementById("m-hora").value=t.hora||"";
   document.getElementById("m-notas").value=t.notas||"";
-  document.getElementById("m-hasta").value=t.hasta||"";
-  document.getElementById("lbl-limite").textContent=t.hasta?"Desde":"Límite";
+  if(t.hasta){
+    setTipo("evento");
+    document.getElementById("m-desde").value=t.limite||"";
+    document.getElementById("m-hasta").value=t.hasta||"";
+  } else {
+    setTipo("tarea");
+    document.getElementById("m-limite").value=t.limite||"";
+  }
   document.getElementById("modal").classList.add("show");
 }
 function cerrarModal(){
@@ -1070,18 +1100,26 @@ function cerrarModal(){
 function guardar(){
   const txt=document.getElementById("m-tarea").value.trim();
   if(!txt){document.getElementById("m-tarea").focus();return;}
-  const hastaVal=document.getElementById("m-hasta").value||"";
-  const limVal=document.getElementById("m-limite").value||"";
-  if(hastaVal&&limVal&&hastaVal<limVal){toast("'Hasta' no puede ser antes de la fecha inicial",true);return;}
-  if(hastaVal&&!limVal){toast("Pon una fecha inicial para el rango",true);return;}
+  let limite,hasta,hora;
+  if(tipoActual==="evento"){
+    const desde=document.getElementById("m-desde").value||"";
+    hasta=document.getElementById("m-hasta").value||"";
+    if(!desde||!hasta){toast("Un evento necesita fecha Desde y Hasta",true);return;}
+    if(hasta<desde){toast("'Hasta' no puede ser antes de 'Desde'",true);return;}
+    limite=desde; hora="";
+  } else {
+    limite=document.getElementById("m-limite").value;
+    hasta=""; hora=document.getElementById("m-hora").value;
+  }
   const t={id:editandoId!==null?editandoId:nuevoId(),tarea:txt,
     dept:document.getElementById("m-dept").value,
     prio:document.getElementById("m-prio").value,
     creada:document.getElementById("m-creada").value||hoy(),
-    limite:document.getElementById("m-limite").value,
-    hora:document.getElementById("m-hora").value,
+    limite:limite,
+    hora:hora,
     notas:document.getElementById("m-notas").value,
-    hasta:document.getElementById("m-hasta").value||""
+    hasta:hasta,
+    tipo:tipoActual
   };
   save();
   const editando=editandoId!==null;
@@ -1297,9 +1335,7 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape")cerrarModal();
 });
 document.getElementById("modal").addEventListener("click",function(e){if(e.target===this)cerrarModal();});
-document.getElementById("m-hasta").addEventListener("change",function(){
-  document.getElementById("lbl-limite").textContent=this.value?"Desde":"Límite";
-});
+
 document.addEventListener("click",function(e){
   if(e.target&&e.target.id==="btn-empty-add"){abrirModal();}
 });
