@@ -551,16 +551,13 @@ window._fbCall = function(fn){
 
     // Expose Firebase functions to window
     window.fbLogin = async () => {
+      // Redirect directo: más estable que popup (sobre todo tras limpiar caché)
       try {
-        // Try popup first (works on most mobile browsers)
-        await signInWithPopup(auth, provider);
+        await signInWithRedirect(auth, provider);
       } catch(e) {
-        // Fallback to redirect if popup blocked
-        if(e.code === "auth/popup-blocked" || e.code === "auth/popup-closed-by-user") {
-          signInWithRedirect(auth, provider);
-        } else {
-          console.error("Login error:", e);
-        }
+        console.error("Login error:", e);
+        // Último recurso: intentar popup
+        try { await signInWithPopup(auth, provider); } catch(e2){ console.error(e2); }
       }
     };
 
