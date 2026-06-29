@@ -306,6 +306,127 @@ body.light .field input,body.light .field select{background:#f8fafc;color:#0f172
 
 <script>
 // Firebase operation queue - must be defined before Firebase module loads
+// ============ IDIOMAS (i18n) ============
+window.LANG="es";
+const I18N={
+  es:{
+    tagline:"Tu gestor de tareas personal", loginGoogle:"Continuar con Google",
+    cargando:"Cargando Taska...",
+    tab_tareas:"Tareas", tab_cal:"Cal.", tab_stats:"Stats", tab_hist:"Historial",
+    st_total:"Total", st_pend:"Pendientes", st_hechas:"Hechas", st_alta:"Alta", st_venc:"Vencidas",
+    sec_vencidas:"Vencidas", sec_hoy:"Para hoy", sec_prox:"Próximas",
+    diasRacha:"días de racha", diaRacha:"día de racha",
+    sinUrgentes:"¡Sin tareas urgentes!", nadaVenceHoy:"Nada vence hoy.",
+    noPendientes:"No hay tareas pendientes.", empezamos:"¿Empezamos?",
+    nuevaTarea:"Nueva tarea", btnNuevaTarea:"+ Nueva tarea", todos:"Todos",
+    completada:"✓ Completada", restaurada:"↩ Restaurada", anadida:"✦ Añadida", actualizada:"✏️ Actualizada",
+    tipo_tarea:"📝 Tarea", tipo_evento:"🗓️ Evento",
+    lbl_tarea:"¿Qué hay que hacer?", lbl_dept:"Departamento", lbl_prio:"Prioridad",
+    sinPrioridad:"Sin prioridad", lbl_creacion:"Creación", lbl_fecha:"Fecha", lbl_limite:"Límite",
+    lbl_hora:"Hora", lbl_desde:"Desde", lbl_hasta:"Hasta", lbl_notas:"Notas", opcional:"Opcional...",
+    masOpciones:"➕ Más opciones", menosOpciones:"➖ Menos opciones",
+    addCalendar:"📆 Añadir recordatorio a Google Calendar",
+    btnAnadir:"Añadir tarea", btnGuardarCambios:"Guardar cambios", cancelar:"Cancelar", guardar:"Guardar",
+    editarTarea:"Editar tarea",
+    m_depts:"🏷️ Departamentos", m_export:"📊 Exportar a Excel", m_offline:"⚡ Modo offline", m_salir:"🚪 Salir", m_idioma:"🌐 Idioma",
+    nuevoDepto:"Nuevo departamento...", sinClasifNota:'"Sin clasificar" se usa por defecto y siempre está disponible.',
+    porDepto:"Por departamento", porPrio:"Por prioridad", histMensual:"Historial mensual",
+    completadas:"Completadas", sinDatos:"Sin datos", sinHistorial:"Sin historial aún",
+    completadasTit:"Completadas", clicRestaurar:'Toca "Restaurar" para devolver', restaurar:"Restaurar",
+    sinCompletadas:"Sin completadas aún", noTareas:"No hay tareas",
+    ayudaTit:"⚡ Cómo funciona sin conexión",
+    ayudaIntro:"Taska guarda una copia de tus tareas en este dispositivo, así que puedes seguir trabajando aunque te quedes sin internet.",
+    ayuda1t:"Sin conexión puedes:", ayuda1d:"ver, crear, editar y completar tareas con normalidad.",
+    ayuda2t:"Al volver internet:", ayuda2d:"todo se sincroniza solo con la nube y con tus otros dispositivos.",
+    ayuda3t:"Aviso visible:", ayuda3d:"cuando no haya conexión lo verás indicado arriba.",
+    ayuda4t:"Importante:", ayuda4d:"la primera vez en un dispositivo nuevo sí necesitas conexión para iniciar sesión y cargar tus datos.",
+    entendido:"Entendido", sinConexion:"⚡ Sin conexión", conexionOk:"✓ Conexión restaurada",
+    offlineAviso:"⚡ Sin conexión — los cambios se guardan local",
+    idiomaTit:"🌐 Idioma", dias:["LU","MA","MI","JU","VI","SA","DO"],
+    meses:["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+  },
+  en:{
+    tagline:"Your personal task manager", loginGoogle:"Continue with Google",
+    cargando:"Loading Taska...",
+    tab_tareas:"Tasks", tab_cal:"Cal.", tab_stats:"Stats", tab_hist:"History",
+    st_total:"Total", st_pend:"Pending", st_hechas:"Done", st_alta:"High", st_venc:"Overdue",
+    sec_vencidas:"Overdue", sec_hoy:"For today", sec_prox:"Upcoming",
+    diasRacha:"day streak", diaRacha:"day streak",
+    sinUrgentes:"Nothing urgent!", nadaVenceHoy:"Nothing due today.",
+    noPendientes:"No pending tasks.", empezamos:"Shall we start?",
+    nuevaTarea:"New task", btnNuevaTarea:"+ New task", todos:"All",
+    completada:"✓ Completed", restaurada:"↩ Restored", anadida:"✦ Added", actualizada:"✏️ Updated",
+    tipo_tarea:"📝 Task", tipo_evento:"🗓️ Event",
+    lbl_tarea:"What needs doing?", lbl_dept:"Department", lbl_prio:"Priority",
+    sinPrioridad:"No priority", lbl_creacion:"Created", lbl_fecha:"Date", lbl_limite:"Due",
+    lbl_hora:"Time", lbl_desde:"From", lbl_hasta:"To", lbl_notas:"Notes", opcional:"Optional...",
+    masOpciones:"➕ More options", menosOpciones:"➖ Fewer options",
+    addCalendar:"📆 Add reminder to Google Calendar",
+    btnAnadir:"Add task", btnGuardarCambios:"Save changes", cancelar:"Cancel", guardar:"Save",
+    editarTarea:"Edit task",
+    m_depts:"🏷️ Departments", m_export:"📊 Export to Excel", m_offline:"⚡ Offline mode", m_salir:"🚪 Sign out", m_idioma:"🌐 Language",
+    nuevoDepto:"New department...", sinClasifNota:'"Unclassified" is used by default and is always available.',
+    porDepto:"By department", porPrio:"By priority", histMensual:"Monthly history",
+    completadas:"Completed", sinDatos:"No data", sinHistorial:"No history yet",
+    completadasTit:"Completed", clicRestaurar:'Tap "Restore" to bring back', restaurar:"Restore",
+    sinCompletadas:"Nothing completed yet", noTareas:"No tasks",
+    ayudaTit:"⚡ How offline works",
+    ayudaIntro:"Taska keeps a copy of your tasks on this device, so you can keep working even without internet.",
+    ayuda1t:"Offline you can:", ayuda1d:"view, create, edit and complete tasks normally.",
+    ayuda2t:"When internet returns:", ayuda2d:"everything syncs automatically with the cloud and your other devices.",
+    ayuda3t:"Visible notice:", ayuda3d:"when there's no connection you'll see it indicated at the top.",
+    ayuda4t:"Important:", ayuda4d:"the first time on a new device you do need a connection to sign in and load your data.",
+    entendido:"Got it", sinConexion:"⚡ Offline", conexionOk:"✓ Connection restored",
+    offlineAviso:"⚡ Offline — changes saved locally",
+    idiomaTit:"🌐 Language", dias:["MO","TU","WE","TH","FR","SA","SU"],
+    meses:["January","February","March","April","May","June","July","August","September","October","November","December"]
+  },
+  ro:{
+    tagline:"Managerul tău personal de sarcini", loginGoogle:"Continuă cu Google",
+    cargando:"Se încarcă Taska...",
+    tab_tareas:"Sarcini", tab_cal:"Cal.", tab_stats:"Stats", tab_hist:"Istoric",
+    st_total:"Total", st_pend:"În așteptare", st_hechas:"Făcute", st_alta:"Ridicată", st_venc:"Expirate",
+    sec_vencidas:"Expirate", sec_hoy:"Pentru azi", sec_prox:"Următoarele",
+    diasRacha:"zile la rând", diaRacha:"zi la rând",
+    sinUrgentes:"Nimic urgent!", nadaVenceHoy:"Nimic scadent azi.",
+    noPendientes:"Nicio sarcină în așteptare.", empezamos:"Începem?",
+    nuevaTarea:"Sarcină nouă", btnNuevaTarea:"+ Sarcină nouă", todos:"Toate",
+    completada:"✓ Finalizată", restaurada:"↩ Restaurată", anadida:"✦ Adăugată", actualizada:"✏️ Actualizată",
+    tipo_tarea:"📝 Sarcină", tipo_evento:"🗓️ Eveniment",
+    lbl_tarea:"Ce trebuie făcut?", lbl_dept:"Departament", lbl_prio:"Prioritate",
+    sinPrioridad:"Fără prioritate", lbl_creacion:"Creare", lbl_fecha:"Data", lbl_limite:"Termen",
+    lbl_hora:"Ora", lbl_desde:"De la", lbl_hasta:"Până la", lbl_notas:"Note", opcional:"Opțional...",
+    masOpciones:"➕ Mai multe opțiuni", menosOpciones:"➖ Mai puține opțiuni",
+    addCalendar:"📆 Adaugă memento în Google Calendar",
+    btnAnadir:"Adaugă sarcină", btnGuardarCambios:"Salvează modificările", cancelar:"Anulează", guardar:"Salvează",
+    editarTarea:"Editează sarcina",
+    m_depts:"🏷️ Departamente", m_export:"📊 Exportă în Excel", m_offline:"⚡ Mod offline", m_salir:"🚪 Ieșire", m_idioma:"🌐 Limbă",
+    nuevoDepto:"Departament nou...", sinClasifNota:'"Neclasificat" este folosit implicit și este mereu disponibil.',
+    porDepto:"După departament", porPrio:"După prioritate", histMensual:"Istoric lunar",
+    completadas:"Finalizate", sinDatos:"Fără date", sinHistorial:"Încă fără istoric",
+    completadasTit:"Finalizate", clicRestaurar:'Apasă "Restaurează" pentru a readuce', restaurar:"Restaurează",
+    sinCompletadas:"Nimic finalizat încă", noTareas:"Nicio sarcină",
+    ayudaTit:"⚡ Cum funcționează offline",
+    ayudaIntro:"Taska păstrează o copie a sarcinilor tale pe acest dispozitiv, ca să poți lucra chiar și fără internet.",
+    ayuda1t:"Offline poți:", ayuda1d:"vizualiza, crea, edita și finaliza sarcini normal.",
+    ayuda2t:"Când revine internetul:", ayuda2d:"totul se sincronizează automat cu cloud-ul și celelalte dispozitive.",
+    ayuda3t:"Notificare vizibilă:", ayuda3d:"când nu există conexiune o vei vedea indicată sus.",
+    ayuda4t:"Important:", ayuda4d:"prima dată pe un dispozitiv nou ai nevoie de conexiune pentru a te autentifica și încărca datele.",
+    entendido:"Am înțeles", sinConexion:"⚡ Offline", conexionOk:"✓ Conexiune restabilită",
+    offlineAviso:"⚡ Offline — modificările se salvează local",
+    idiomaTit:"🌐 Limbă", dias:["LU","MA","MI","JO","VI","SÂ","DU"],
+    meses:["Ianuarie","Februarie","Martie","Aprilie","Mai","Iunie","Iulie","August","Septembrie","Octombrie","Noiembrie","Decembrie"]
+  }
+};
+function T(k){return (I18N[window.LANG]&&I18N[window.LANG][k])||I18N.es[k]||k;}
+window.T=T;
+function detectarIdioma(){
+  const guardado=localStorage.getItem("taska_lang");
+  if(guardado&&I18N[guardado])return guardado;
+  const nav=(navigator.language||"es").slice(0,2).toLowerCase();
+  return I18N[nav]?nav:"es";
+}
+
 window.tareas=[];
 window.hist=[];
 window._fbQueue=[];
@@ -407,9 +528,17 @@ window._fbCall = function(fn){
         tryRender();
       });
       onSnapshot(doc(db, "users", uid, "config", "app"), snap => {
-        if(snap.exists() && snap.data().departamentos){
-          window.userDepts = snap.data().departamentos;
-          if(typeof window.applyDepts === "function") window.applyDepts();
+        if(snap.exists()){
+          const data=snap.data();
+          if(data.departamentos){
+            window.userDepts = data.departamentos;
+            if(typeof window.applyDepts === "function") window.applyDepts();
+          }
+          if(data.idioma && data.idioma!==window.LANG){
+            window.LANG=data.idioma;
+            localStorage.setItem("taska_lang",data.idioma);
+            if(typeof window.aplicarIdioma==="function") window.aplicarIdioma();
+          }
         }
       });
       unsubHist = onSnapshot(collection(db, "users", uid, "historial"), snap => {
@@ -463,7 +592,7 @@ window._fbCall = function(fn){
     };
     window.fbSaveConfig = async (cfg) => {
       if(!uid) return;
-      await setDoc(doc(db, "users", uid, "config", "app"), cfg);
+      await setDoc(doc(db, "users", uid, "config", "app"), cfg, { merge: true });
     };
   </script>
 </head>
@@ -477,7 +606,7 @@ window._fbCall = function(fn){
     background:linear-gradient(135deg,var(--accent),var(--accent2));
     display:flex;align-items:center;justify-content:center;
     font-size:28px;animation:pulse 1.5s ease-in-out infinite">✓</div>
-  <div style="font-size:13px;color:var(--text3)">Cargando Taska...</div>
+  <div style="font-size:13px;color:var(--text3)" data-i18n="cargando">Cargando Taska...</div>
 </div>
 <style>
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(0.95)}}
@@ -488,13 +617,13 @@ window._fbCall = function(fn){
   <div style="text-align:center;padding:0 32px">
     <img src="icon-192.png" style="width:80px;height:80px;margin:0 auto 16px;display:block;border-radius:22px;box-shadow:0 8px 32px rgba(5,150,105,0.4)">
     <div style="font-size:28px;font-weight:800;color:var(--text);margin-bottom:6px">Taska</div>
-    <div style="font-size:14px;color:var(--text3);margin-bottom:32px">Tu gestor de tareas personal</div>
+    <div style="font-size:14px;color:var(--text3);margin-bottom:32px" data-i18n="tagline">Tu gestor de tareas personal</div>
     <button onclick="fbLogin()" style="display:flex;align-items:center;gap:10px;
       padding:13px 24px;background:white;color:#1f2937;border:none;border-radius:12px;
       font-size:15px;font-weight:600;cursor:pointer;margin:0 auto;
       box-shadow:0 4px 16px rgba(0,0,0,0.2);transition:all 0.2s">
       <img src="https://www.google.com/favicon.ico" width="18" height="18">
-      Continuar con Google
+      <span data-i18n="loginGoogle">Continuar con Google</span>
     </button>
   </div>
 </div>
@@ -514,23 +643,23 @@ window._fbCall = function(fn){
       <button id="menu-btn" onclick="toggleMenu()" style="font-size:16px;padding:3px 8px;border:1px solid var(--border2);border-radius:8px;background:none;color:var(--text2);cursor:pointer">☰</button>
       <div id="menu-drop" style="display:none;position:absolute;right:0;top:36px;background:var(--bg2);border:1px solid var(--border2);border-radius:12px;min-width:200px;box-shadow:0 12px 40px rgba(0,0,0,0.4);z-index:300;overflow:hidden">
         <div id="menu-perfil" style="padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text3)"></div>
-        <div class="menu-item" onclick="abrirDepts()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">🏷️ Departamentos</div>
-        <div class="menu-item" onclick="exportarExcel()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">📊 Exportar a Excel</div>
-        <div class="menu-item" onclick="abrirAyuda()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)">⚡ Modo offline</div>
-        <div class="menu-item" onclick="fbLogout()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:#f87171;border-top:1px solid var(--border)">🚪 Salir</div>
+        <div class="menu-item" onclick="abrirDepts()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)"data-i18n="m_depts">🏷️ Departamentos</div>
+        <div class="menu-item" onclick="exportarExcel()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)"data-i18n="m_export">📊 Exportar a Excel</div>
+        <div class="menu-item" onclick="abrirAyuda()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:var(--text)"data-i18n="m_offline">⚡ Modo offline</div>
+        <div class="menu-item" onclick="fbLogout()" style="padding:11px 14px;font-size:13px;cursor:pointer;color:#f87171;border-top:1px solid var(--border)"data-i18n="m_salir">🚪 Salir</div>
       </div>
     </div>
     <div class="theme-btn" onclick="toggleTheme()"></div>
-    <span class="date-pill" id="offline-pill" style="display:none;background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.3)">⚡ Sin conexión</span>
+    <span class="date-pill" id="offline-pill" data-i18n="sinConexion" style="display:none;background:rgba(245,158,11,0.15);color:#fbbf24;border-color:rgba(245,158,11,0.3)">⚡ Sin conexión</span>
     <span class="date-pill" id="fecha-hoy"></span>
   </div>
 </div>
 
 <div class="nav">
-  <div class="tab active" onclick="showTab('focus',this)">📋 <span class="tab-txt">Tareas</span> <span class="badge" id="badge-all">0</span></div>
-  <div class="tab" onclick="showTab('cal',this)">📅 <span class="tab-txt">Cal.</span></div>
-  <div class="tab" onclick="showTab('dash',this)">📊 <span class="tab-txt">Stats</span></div>
-  <div class="tab" onclick="showTab('hist',this)">📁 <span class="tab-txt">Historial</span> <span class="badge green" id="badge-hist">0</span></div>
+  <div class="tab active" onclick="showTab('focus',this)">📋 <span class="tab-txt" data-i18n="tab_tareas">Tareas</span> <span class="badge" id="badge-all">0</span></div>
+  <div class="tab" onclick="showTab('cal',this)">📅 <span class="tab-txt" data-i18n="tab_cal">Cal.</span></div>
+  <div class="tab" onclick="showTab('dash',this)">📊 <span class="tab-txt" data-i18n="tab_stats">Stats</span></div>
+  <div class="tab" onclick="showTab('hist',this)">📁 <span class="tab-txt" data-i18n="tab_hist">Historial</span> <span class="badge green" id="badge-hist">0</span></div>
 </div>
 
 <!-- FOCUS / HOY -->
@@ -551,11 +680,11 @@ window._fbCall = function(fn){
       <button class="cal-btn" onclick="calCambiar(1)">›</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:10px 10px 4px">
-      <div class="cal-day-hdr">LU</div><div class="cal-day-hdr">MA</div>
-      <div class="cal-day-hdr">MI</div><div class="cal-day-hdr">JU</div>
-      <div class="cal-day-hdr">VI</div>
-      <div class="cal-day-hdr" style="color:#f87171">SA</div>
-      <div class="cal-day-hdr" style="color:#f87171">DO</div>
+      <div class="cal-day-hdr" data-cal="0"></div><div class="cal-day-hdr" data-cal="1"></div>
+      <div class="cal-day-hdr" data-cal="2"></div><div class="cal-day-hdr" data-cal="3"></div>
+      <div class="cal-day-hdr" data-cal="4"></div>
+      <div class="cal-day-hdr" data-cal="5" style="color:#f87171"></div>
+      <div class="cal-day-hdr" data-cal="6" style="color:#f87171"></div>
     </div>
     <div id="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:0 10px 10px"></div>
   </div>
@@ -592,7 +721,7 @@ window._fbCall = function(fn){
   <div class="card">
     <div class="card-header">
       <span>Completadas</span>
-      <span style="font-size:11px;color:var(--text3)">Clic en "Restaurar" para devolver</span>
+      <span style="font-size:11px;color:var(--text3)" data-i18n="clicRestaurar">Clic en "Restaurar" para devolver</span>
     </div>
     <div id="lista-hist"></div>
   </div>
@@ -604,48 +733,48 @@ window._fbCall = function(fn){
 <div class="overlay" id="modal">
   <div class="modal">
     <div class="modal-drag"></div>
-    <h2 id="modal-titulo">Nueva tarea</h2>
+    <h2 id="modal-titulo" data-i18n="nuevaTarea">Nueva tarea</h2>
 
     <!-- ===== CAPTURA RÁPIDA (siempre visible) ===== -->
     <div class="field">
-      <input type="text" id="m-tarea" placeholder="¿Qué hay que hacer?" style="font-size:15px">
+      <input type="text" id="m-tarea" data-i18n-ph="lbl_tarea" placeholder="¿Qué hay que hacer?" style="font-size:15px">
     </div>
 
     <!-- Selector tipo (solo visible al expandir) -->
     <div id="tipo-selector" style="display:none;gap:8px;margin-bottom:14px">
-      <button type="button" id="tipo-tarea" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">📝 Tarea</button>
-      <button type="button" id="tipo-evento" onclick="setTipo('evento')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer">🗓️ Evento</button>
+      <button type="button" id="tipo-tarea" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer"data-i18n="tipo_tarea"data-i18n="tipo_tarea">📝 Tarea</button>
+      <button type="button" id="tipo-evento" onclick="setTipo('evento')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--border2);background:none;color:var(--text2);font-size:13px;font-weight:600;cursor:pointer"data-i18n="tipo_evento">🗓️ Evento</button>
     </div>
 
     <!-- Campos de TAREA: fecha+hora visibles -->
     <div class="grid3" id="bloque-tarea">
       <div class="field" id="campo-creada" style="display:none">
-        <label>Creación</label>
+        <label data-i18n="lbl_creacion">Creación</label>
         <input type="date" id="m-creada">
       </div>
       <div class="field">
-        <label id="lbl-limite">Fecha</label>
+        <label id="lbl-limite" data-i18n="lbl_fecha">Fecha</label>
         <input type="date" id="m-limite">
       </div>
       <div class="field">
-        <label>Hora</label>
+        <label data-i18n="lbl_hora">Hora</label>
         <input type="time" id="m-hora">
       </div>
     </div>
     <!-- Campos de EVENTO -->
     <div class="grid2" id="bloque-evento" style="display:none">
       <div class="field">
-        <label>Desde</label>
+        <label data-i18n="lbl_desde">Desde</label>
         <input type="date" id="m-desde">
       </div>
       <div class="field">
-        <label>Hasta</label>
+        <label data-i18n="lbl_hasta">Hasta</label>
         <input type="date" id="m-hasta">
       </div>
     </div>
 
     <!-- ===== MÁS OPCIONES (plegable) ===== -->
-    <button type="button" id="btn-mas" onclick="toggleMas()" style="width:100%;padding:9px;margin:4px 0;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text3);cursor:pointer">➕ Más opciones</button>
+    <button type="button" id="btn-mas" onclick="toggleMas()" style="width:100%;padding:9px;margin:4px 0;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text3);cursor:pointer" data-i18n="masOpciones">➕ Más opciones</button>
     <div id="mas-opciones" style="display:none">
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button type="button" id="tipo-tarea-2" onclick="setTipo('tarea')" style="flex:1;padding:9px;border-radius:10px;border:1px solid var(--accent);background:rgba(59,130,246,0.12);color:var(--accent);font-size:13px;font-weight:600;cursor:pointer">📝 Tarea</button>
@@ -653,24 +782,24 @@ window._fbCall = function(fn){
       </div>
       <div class="grid2">
         <div class="field">
-          <label>Departamento</label>
+          <label data-i18n="lbl_dept">Departamento</label>
           <select id="m-dept"></select>
         </div>
         <div class="field">
-          <label>Prioridad</label>
-          <select id="m-prio"><option value="">Sin prioridad</option><option>Alta</option><option>Media</option><option>Baja</option></select>
+          <label data-i18n="lbl_prio">Prioridad</label>
+          <select id="m-prio"><option value="" data-i18n="sinPrioridad">Sin prioridad</option><option>Alta</option><option>Media</option><option>Baja</option></select>
         </div>
       </div>
       <div class="field">
-        <label>Notas</label>
-        <input type="text" id="m-notas" placeholder="Opcional...">
+        <label data-i18n="lbl_notas">Notas</label>
+        <input type="text" id="m-notas" data-i18n-ph="opcional" placeholder="Opcional...">
       </div>
-      <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer">📆 Añadir recordatorio a Google Calendar</button>
+      <button onclick="agendarDesdeModal()" style="width:100%;padding:10px;margin-top:4px;background:none;border:1px dashed var(--border2);border-radius:10px;font-size:13px;color:var(--text2);cursor:pointer"data-i18n="addCalendar">📆 Añadir recordatorio a Google Calendar</button>
     </div>
 
     <div class="actions">
-      <button class="btn-p" id="btn-guardar" onclick="guardar()">Añadir tarea</button>
-      <button class="btn-s" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-p" id="btn-guardar" onclick="guardar()" data-i18n="btnAnadir">Añadir tarea</button>
+      <button class="btn-s" onclick="cerrarModal()" data-i18n="cancelar">Cancelar</button>
     </div>
   </div>
 </div>
@@ -679,10 +808,10 @@ window._fbCall = function(fn){
 <div class="overlay" id="modal-depts">
   <div class="modal">
     <div class="modal-drag"></div>
-    <h2>🏷️ Departamentos</h2>
+    <h2 data-i18n="m_depts">🏷️ Departamentos</h2>
     <div id="depts-lista" style="display:flex;flex-direction:column;gap:6px;max-height:280px;overflow-y:auto;margin-bottom:14px"></div>
     <div style="display:flex;gap:8px">
-      <input type="text" id="dept-nuevo" placeholder="Nuevo departamento..." style="flex:1;padding:10px 13px;border:1px solid var(--border2);border-radius:10px;font-size:14px;background:var(--bg3);color:var(--text);outline:none">
+      <input type="text" id="dept-nuevo" data-i18n-ph="nuevoDepto" placeholder="Nuevo departamento..." style="flex:1;padding:10px 13px;border:1px solid var(--border2);border-radius:10px;font-size:14px;background:var(--bg3);color:var(--text);outline:none">
       <button onclick="addDept()" style="padding:10px 16px;background:#059669;color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer">+</button>
     </div>
     <div class="actions">
@@ -696,28 +825,44 @@ window._fbCall = function(fn){
 <div class="overlay" id="modal-ayuda">
   <div class="modal">
     <div class="modal-drag"></div>
-    <h2>⚡ Cómo funciona sin conexión</h2>
+    <h2 data-i18n="ayudaTit">⚡ Cómo funciona sin conexión</h2>
     <div style="font-size:13.5px;color:var(--text2);line-height:1.6">
-      <p style="margin-bottom:12px">Taska guarda una copia de tus tareas en este dispositivo, así que puedes seguir trabajando aunque te quedes sin internet.</p>
+      <p style="margin-bottom:12px" data-i18n="ayudaIntro">Taska guarda una copia de tus tareas en este dispositivo, así que puedes seguir trabajando aunque te quedes sin internet.</p>
       <div style="display:flex;gap:10px;margin-bottom:10px">
         <span style="font-size:18px">✅</span>
-        <div><b style="color:var(--text)">Sin conexión puedes:</b><br>ver, crear, editar y completar tareas con normalidad.</div>
+        <div><b style="color:var(--text)" data-i18n="ayuda1t">Sin conexión puedes:</b><br><span data-i18n="ayuda1d">ver, crear, editar y completar tareas con normalidad.</span></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
         <span style="font-size:18px">🔄</span>
-        <div><b style="color:var(--text)">Al volver internet:</b><br>todo se sincroniza solo con la nube y con tus otros dispositivos.</div>
+        <div><b style="color:var(--text)" data-i18n="ayuda2t">Al volver internet:</b><br><span data-i18n="ayuda2d">todo se sincroniza solo con la nube y con tus otros dispositivos.</span></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:10px">
         <span style="font-size:18px">⚡</span>
-        <div><b style="color:var(--text)">Aviso visible:</b><br>cuando no haya conexión verás <span style="background:rgba(245,158,11,0.15);color:#fbbf24;padding:1px 7px;border-radius:10px;font-size:11px">⚡ Sin conexión</span> arriba.</div>
+        <div><b style="color:var(--text)" data-i18n="ayuda3t">Aviso visible:</b><br><span data-i18n="ayuda3d">cuando no haya conexión lo verás indicado arriba.</span></div>
       </div>
       <div style="display:flex;gap:10px;margin-bottom:4px">
         <span style="font-size:18px">📶</span>
-        <div><b style="color:var(--text)">Importante:</b><br>la primera vez en un dispositivo nuevo sí necesitas conexión para iniciar sesión y cargar tus datos.</div>
+        <div><b style="color:var(--text)" data-i18n="ayuda4t">Importante:</b><br><span data-i18n="ayuda4d">la primera vez en un dispositivo nuevo sí necesitas conexión para iniciar sesión y cargar tus datos.</span></div>
       </div>
     </div>
     <div class="actions">
-      <button class="btn-p" onclick="cerrarAyuda()" style="background:#059669">Entendido</button>
+      <button class="btn-p" onclick="cerrarAyuda()" style="background:#059669" data-i18n="entendido">Entendido</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IDIOMA -->
+<div class="overlay" id="modal-idioma">
+  <div class="modal">
+    <div class="modal-drag"></div>
+    <h2 data-i18n="idiomaTit">🌐 Idioma</h2>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+      <button class="lang-opt" onclick="setIdioma('es')" data-l="es" style="padding:13px;border-radius:10px;border:1px solid var(--border2);background:var(--glass);color:var(--text);font-size:14px;cursor:pointer;text-align:left">🇪🇸 Castellano</button>
+      <button class="lang-opt" onclick="setIdioma('en')" data-l="en" style="padding:13px;border-radius:10px;border:1px solid var(--border2);background:var(--glass);color:var(--text);font-size:14px;cursor:pointer;text-align:left">🇬🇧 English</button>
+      <button class="lang-opt" onclick="setIdioma('ro')" data-l="ro" style="padding:13px;border-radius:10px;border:1px solid var(--border2);background:var(--glass);color:var(--text);font-size:14px;cursor:pointer;text-align:left">🇷🇴 Română</button>
+    </div>
+    <div class="actions">
+      <button class="btn-s" onclick="cerrarIdioma()" data-i18n="cancelar">Cancelar</button>
     </div>
   </div>
 </div>
@@ -814,11 +959,11 @@ function statsBar(id){
   const el=document.getElementById(id);
   if(!el)return;
   el.innerHTML=`
-    <div class="stat blue"><span class="num">${total}</span> 📋 Total</div>
-    <div class="stat warn"><span class="num">${numPend}</span> ⏳ Pendientes</div>
-    <div class="stat ok"><span class="num">${numComp}</span> ✅ Hechas</div>
-    <div class="stat danger"><span class="num">${alta}</span> ❗ Alta</div>
-    <div class="stat danger"><span class="num">${venc}</span> ⚠️ Vencidas</div>
+    <div class="stat blue"><span class="num">${total}</span> 📋 ${T("st_total")}</div>
+    <div class="stat warn"><span class="num">${numPend}</span> ⏳ ${T("st_pend")}</div>
+    <div class="stat ok"><span class="num">${numComp}</span> ✅ ${T("st_hechas")}</div>
+    <div class="stat danger"><span class="num">${alta}</span> ❗ ${T("st_alta")}</div>
+    <div class="stat danger"><span class="num">${venc}</span> ⚠️ ${T("st_venc")}</div>
   `;
 }
 
@@ -839,38 +984,38 @@ function renderFocus(){
   // Filter chips
   const depts=[...new Set(tareas.map(t=>t.dept))];
   const chips=`<div class="filter-row">
-    <div class="filter-chip ${!filtroActivo?'active':''}" onclick="setFiltro('')">Todos</div>
+    <div class="filter-chip ${!filtroActivo?'active':''}" onclick="setFiltro('')">${T("todos")}</div>
     ${depts.map(d=>`<div class="filter-chip ${filtroActivo===d?'active':''}" onclick="setFiltro('${d}')">${d}</div>`).join("")}
   </div>`;
 
   let htmlHoy="";
   if(vencidas.length>0){
-    htmlHoy+=`<div class="section-label">⚠️ Vencidas (${vencidas.length})</div>`;
+    htmlHoy+=`<div class="section-label">⚠️ ${T("sec_vencidas")} (${vencidas.length})</div>`;
     htmlHoy+=vencidas.map(t=>focusCard(t,"vencida")).join("");
   }
   if(deHoy.length>0){
     const sh=statsHoy();
-    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'};display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy (${deHoy.length})</span><span style="font-weight:500">${sh.pct!==null?sh.pct+"% · ":""}🔥 ${sh.racha} ${sh.racha===1?"día":"días"} de racha</span></div>`;
+    htmlHoy+=`<div class="section-label" style="margin-top:${vencidas.length>0?'16px':'0'};display:flex;justify-content:space-between;align-items:center"><span>📌 ${T("sec_hoy")} (${deHoy.length})</span><span style="font-weight:500">${sh.pct!==null?sh.pct+"% · ":""}🔥 ${sh.racha} ${sh.racha===1?T("diaRacha"):T("diasRacha")}</span></div>`;
     htmlHoy+=deHoy.map(t=>focusCard(t,t.prio==="Alta"?"alta":"")).join("");
   }
   if(vencidas.length===0&&deHoy.length===0){
     const sh2=statsHoy();
-    htmlHoy+=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center"><span>📌 Para hoy</span><span style="font-weight:500">${sh2.pct!==null?sh2.pct+"% · ":""}🔥 ${sh2.racha} ${sh2.racha===1?"día":"días"} de racha</span></div>
+    htmlHoy+=`<div class="section-label" style="display:flex;justify-content:space-between;align-items:center"><span>📌 ${T("sec_hoy")}</span><span style="font-weight:500">${sh2.pct!==null?sh2.pct+"% · ":""}🔥 ${sh2.racha} ${sh2.racha===1?T("diaRacha"):T("diasRacha")}</span></div>
     <div style="text-align:center;padding:24px 16px 8px">
       <div style="font-size:44px;margin-bottom:8px">🎉</div>
-      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">¡Sin tareas urgentes!</div>
-      <div style="font-size:13px;color:var(--text3)">Nada vence hoy.</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px">${T("sinUrgentes")}</div>
+      <div style="font-size:13px;color:var(--text3)">${T("nadaVenceHoy")}</div>
     </div>`;
   }
 
   let htmlResto="";
   if(resto.length>0){
-    htmlResto+=`<div class="section-label" style="margin-top:16px">📋 Próximas (${resto.length})</div>`;
+    htmlResto+=`<div class="section-label" style="margin-top:16px">📋 ${T("sec_prox")} (${resto.length})</div>`;
     htmlResto+=`<div class="task-list">${resto.map(t=>taskItem(t)).join("")}</div>`;
   } else if(src.length===0){
     htmlResto+=`<div style="text-align:center;padding:20px 16px 32px">
-      <div style="font-size:13px;color:var(--text3);margin-bottom:16px">No hay tareas pendientes.<br>¿Empezamos?</div>
-      <button id="btn-empty-add" style="padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">+ Nueva tarea</button>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:16px">${T("noPendientes")}<br>${T("empezamos")}</div>
+      <button id="btn-empty-add" style="padding:10px 24px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;border:none;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">${T("btnNuevaTarea")}</button>
     </div>`;
   }
 
@@ -917,13 +1062,13 @@ function renderTodas(){
   // Chips de filtro
   const chips=document.getElementById("filter-chips");
   const depts=[...new Set(tareas.map(t=>t.dept))];
-  chips.innerHTML=`<div class="filter-chip ${!filtroActivo?'active':''}" onclick="setFiltro('')">Todos</div>`+
+  chips.innerHTML=`<div class="filter-chip ${!filtroActivo?'active':''}" onclick="setFiltro('')">${T("todos")}</div>`+
     depts.map(d=>`<div class="filter-chip ${filtroActivo===d?'active':''}" onclick="setFiltro('${d}')">${d}</div>`).join("");
   
   const lista=filtroActivo?tareas.filter(t=>t.dept===filtroActivo):tareas;
   const sorted=lista.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2,"":3};return (p[a.prio]??3)-(p[b.prio]??3);});
   document.getElementById("lista-todas").innerHTML=sorted.length===0
-    ?'<div class="empty"><div class="empty-icon">✨</div>No hay tareas</div>'
+    ?'<div class="empty"><div class="empty-icon">✨</div>'+T("noTareas")+'</div>'
     :sorted.map(t=>taskItem(t)).join("");
 }
 
@@ -931,7 +1076,7 @@ function setFiltro(d){filtroActivo=d;renderFocus();}
 
 function renderHist(){
   const lista=document.getElementById("lista-hist");
-  if(window.hist.length===0){lista.innerHTML='<div class="empty"><div class="empty-icon">📭</div>Sin completadas aún</div>';return;}
+  if(window.hist.length===0){lista.innerHTML='<div class="empty"><div class="empty-icon">📭</div>'+T("sinCompletadas")+'</div>';return;}
   lista.innerHTML=hist.map(t=>`
     <div class="hist-item">
       <div class="hist-done">✓</div>
@@ -942,7 +1087,7 @@ function renderHist(){
           <span style="font-size:11px;color:var(--text3)">✓ ${fmt(t.completada)}</span>
         </div>
       </div>
-      <button class="restore-btn" onclick="restaurar('${t.id}')">Restaurar</button>
+      <button class="restore-btn" onclick="restaurar('${t.id}')">${T("restaurar")}</button>
     </div>`).join("");
 }
 
@@ -962,7 +1107,7 @@ function renderDash(){
       <span style="font-size:11px;color:var(--text3);min-width:60px;text-align:right">
         <span style="color:var(--warn)">${pendD}⏳</span> <span style="color:var(--success)">${compD}✓</span>
       </span>
-    </div>`;}).join("")||'<div class="empty">Sin datos</div>';
+    </div>`;}).join("")||'<div class="empty">${T("sinDatos")}</div>';
 
   const prios={Alta:0,Media:0,Baja:0,"":0};todas.forEach(t=>{prios[t.prio||""]=(prios[t.prio||""]||0)+1;});
   const maxP=Math.max(...Object.values(prios),1);
@@ -980,8 +1125,8 @@ function renderDash(){
   const pm={};hist.forEach(t=>{if(t.completada){const m=t.completada.substring(0,7);pm[m]=(pm[m]||0)+1;}});
   const mk=Object.keys(pm).sort().reverse().slice(0,6);
   document.getElementById("dash-mensual").innerHTML=mk.length===0
-    ?'<div style="grid-column:1/-1" class="empty">Sin historial aún</div>'
-    :mk.map(m=>{const[y,mo]=m.split("-");return`<div class="mes-card"><div class="m">${MESES[parseInt(mo)-1]}</div><div class="n">${pm[m]}</div><div class="l">${y}</div></div>`;}).join("");
+    ?'<div style="grid-column:1/-1" class="empty">'+T("sinHistorial")+'</div>'
+    :mk.map(m=>{const[y,mo]=m.split("-");return`<div class="mes-card"><div class="m">${T("meses")[parseInt(mo)-1]}</div><div class="n">${pm[m]}</div><div class="l">${y}</div></div>`;}).join("");
 }
 
 function drawPie(depts){
@@ -1020,7 +1165,7 @@ function drawPie(depts){
 }
 
 function renderCal(){
-  document.getElementById("cal-titulo").textContent=MESES[calM]+" "+calA;
+  document.getElementById("cal-titulo").textContent=T("meses")[calM]+" "+calA;
   const grid=document.getElementById("cal-grid");grid.innerHTML="";
   const pd=new Date(calA,calM,1).getDay();
   const off=pd===0?6:pd-1;
@@ -1087,14 +1232,14 @@ function completar(id){
   const copia={...t,completada:hoy()};
   window._fbCall(()=>window.fbDeleteTarea && window.fbDeleteTarea(id));
   window._fbCall(()=>window.fbSaveHist && window.fbSaveHist(copia));
-  toast("✓ Completada");
+  toast(T("completada"));
 }
 function restaurar(id){
   const t=hist.find(x=>String(x.id)===String(id));if(!t)return;
   delete t.completada;
   window._fbCall(()=>window.fbDeleteHist && window.fbDeleteHist(id));
   window._fbCall(()=>window.fbSaveTarea && window.fbSaveTarea(t));
-  toast("↩ Restaurada",true);
+  toast(T("restaurada"),true);
 }
 function eliminar(id){
   if(!confirm("¿Eliminar?"))return;
@@ -1206,7 +1351,7 @@ function guardar(){
   save();
   const editando=editandoId!==null;
   window._fbCall(()=>window.fbSaveTarea(t));
-  cerrarModal();toast(editando?"✏️ Actualizada":"✦ Añadida");
+  cerrarModal();toast(editando?T("actualizada"):T("anadida"));
   editandoId=null;
 }
 
@@ -1242,6 +1387,50 @@ document.addEventListener("click",e=>{
   if(m&&!e.target.closest("#menu-btn")&&!e.target.closest("#menu-drop"))m.style.display="none";
 });
 
+
+// ===== Aplicar idioma a la interfaz =====
+function aplicarIdioma(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k=el.getAttribute("data-i18n"); const v=T(k); if(v)el.textContent=v;
+  });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el=>{
+    const k=el.getAttribute("data-i18n-ph"); const v=T(k); if(v)el.placeholder=v;
+  });
+  document.querySelectorAll("[data-cal]").forEach(el=>{
+    el.textContent=T("dias")[parseInt(el.getAttribute("data-cal"))];
+  });
+  // botón guardar según modo
+  const bg=document.getElementById("btn-guardar");
+  if(bg)bg.textContent=editandoId!==null?T("btnGuardarCambios"):T("btnAnadir");
+  const bm=document.getElementById("btn-mas");
+  if(bm)bm.textContent=masAbierto?T("menosOpciones"):T("masOpciones");
+  const mt=document.getElementById("modal-titulo");
+  if(mt)mt.textContent=editandoId!==null?T("editarTarea"):T("nuevaTarea");
+  // pill offline
+  actualizarConexion&&actualizarConexion();
+  if(typeof render==="function")render();
+}
+window.aplicarIdioma=aplicarIdioma;
+function abrirIdioma(){
+  document.getElementById("menu-drop").style.display="none";
+  document.querySelectorAll(".lang-opt").forEach(b=>{
+    const sel=b.getAttribute("data-l")===window.LANG;
+    b.style.borderColor=sel?"#059669":"var(--border2)";
+    b.style.background=sel?"rgba(5,150,105,0.12)":"var(--glass)";
+  });
+  document.getElementById("modal-idioma").classList.add("show");
+}
+function cerrarIdioma(){document.getElementById("modal-idioma").classList.remove("show");}
+function setIdioma(l){
+  window.LANG=l;
+  localStorage.setItem("taska_lang",l);
+  window._fbCall(()=>window.fbSaveConfig&&window.fbSaveConfig({idioma:l}));
+  aplicarIdioma();
+  cerrarIdioma();
+}
+window.setIdioma=setIdioma;
+document.getElementById("modal-idioma").addEventListener("click",function(e){if(e.target===this)cerrarIdioma();});
+
 // Ayuda offline
 function abrirAyuda(){
   document.getElementById("menu-drop").style.display="none";
@@ -1260,7 +1449,7 @@ function abrirDepts(){
 }
 function cerrarDepts(){document.getElementById("modal-depts").classList.remove("show");}
 function renderDeptsLista(){
-  document.getElementById("depts-lista").innerHTML=`<div style="font-size:11px;color:var(--text3);padding:0 2px 6px">"Sin clasificar" se usa por defecto y siempre está disponible.</div>`+deptsTemp.map((d,i)=>`
+  document.getElementById("depts-lista").innerHTML=`<div style="font-size:11px;color:var(--text3);padding:0 2px 6px">${T("sinClasifNota")}</div>`+deptsTemp.map((d,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--glass);border:1px solid var(--border);border-radius:8px">
       <span class="dept-pill" style="background:${PALETA[i%PALETA.length][0]};color:${PALETA[i%PALETA.length][1]}">${d}</span>
       <span style="flex:1"></span>
@@ -1422,8 +1611,8 @@ function actualizarConexion(){
   const pill=document.getElementById("offline-pill");
   if(pill)pill.style.display=navigator.onLine?"none":"inline-block";
 }
-window.addEventListener("online",()=>{actualizarConexion();toast("✓ Conexión restaurada");});
-window.addEventListener("offline",()=>{actualizarConexion();toast("⚡ Sin conexión — los cambios se guardan local",true);});
+window.addEventListener("online",()=>{actualizarConexion();toast(T("conexionOk"));});
+window.addEventListener("offline",()=>{actualizarConexion();toast(T("offlineAviso"),true);});
 actualizarConexion();
 
 // Fecha
