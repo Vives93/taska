@@ -551,13 +551,13 @@ window._fbCall = function(fn){
 
     // Expose Firebase functions to window
     window.fbLogin = async () => {
-      // Redirect directo: más estable que popup (sobre todo tras limpiar caché)
       try {
-        await signInWithRedirect(auth, provider);
+        await signInWithPopup(auth, provider);
       } catch(e) {
         console.error("Login error:", e);
-        // Último recurso: intentar popup
-        try { await signInWithPopup(auth, provider); } catch(e2){ console.error(e2); }
+        if(e.code === "auth/popup-blocked") {
+          alert("El navegador ha bloqueado la ventana de Google. Permite las ventanas emergentes para este sitio e intentalo de nuevo.");
+        }
       }
     };
 
