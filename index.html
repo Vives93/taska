@@ -330,7 +330,8 @@ const I18N={
     editarTarea:"Editar tarea",
     m_depts:"🏷️ Departamentos", m_export:"📊 Exportar a Excel", m_offline:"⚡ Modo offline", m_salir:"🚪 Salir", m_idioma:"🌐 Idioma",
     nuevoDepto:"Nuevo departamento...", sinClasifNota:'"Sin clasificar" se usa por defecto y siempre está disponible.',
-    porDepto:"Por departamento", porPrio:"Por prioridad", histMensual:"Historial mensual",
+    porDepto:"Por departamento", porPrio:"Por prioridad", histMensual:"Historial mensual", pctDepto:"% por departamento",
+    p_alta:"Alta", p_media:"Media", p_baja:"Baja", p_sin:"Sin prio.", d_sinclasif:"Sin clasificar",
     completadas:"Completadas", sinDatos:"Sin datos", sinHistorial:"Sin historial aún",
     completadasTit:"Completadas", clicRestaurar:'Toca "Restaurar" para devolver', restaurar:"Restaurar",
     sinCompletadas:"Sin completadas aún", noTareas:"No hay tareas",
@@ -366,7 +367,8 @@ const I18N={
     editarTarea:"Edit task",
     m_depts:"🏷️ Departments", m_export:"📊 Export to Excel", m_offline:"⚡ Offline mode", m_salir:"🚪 Sign out", m_idioma:"🌐 Language",
     nuevoDepto:"New department...", sinClasifNota:'"Unclassified" is used by default and is always available.',
-    porDepto:"By department", porPrio:"By priority", histMensual:"Monthly history",
+    porDepto:"By department", porPrio:"By priority", histMensual:"Monthly history", pctDepto:"% by department",
+    p_alta:"High", p_media:"Medium", p_baja:"Low", p_sin:"No prio.", d_sinclasif:"Unclassified",
     completadas:"Completed", sinDatos:"No data", sinHistorial:"No history yet",
     completadasTit:"Completed", clicRestaurar:'Tap "Restore" to bring back', restaurar:"Restore",
     sinCompletadas:"Nothing completed yet", noTareas:"No tasks",
@@ -402,7 +404,8 @@ const I18N={
     editarTarea:"Editează sarcina",
     m_depts:"🏷️ Departamente", m_export:"📊 Exportă în Excel", m_offline:"⚡ Mod offline", m_salir:"🚪 Ieșire", m_idioma:"🌐 Limbă",
     nuevoDepto:"Departament nou...", sinClasifNota:'"Neclasificat" este folosit implicit și este mereu disponibil.',
-    porDepto:"După departament", porPrio:"După prioritate", histMensual:"Istoric lunar",
+    porDepto:"După departament", porPrio:"După prioritate", histMensual:"Istoric lunar", pctDepto:"% după departament",
+    p_alta:"Ridicată", p_media:"Medie", p_baja:"Scăzută", p_sin:"Fără prio.", d_sinclasif:"Neclasificat",
     completadas:"Finalizate", sinDatos:"Fără date", sinHistorial:"Încă fără istoric",
     completadasTit:"Finalizate", clicRestaurar:'Apasă "Restaurează" pentru a readuce', restaurar:"Restaurează",
     sinCompletadas:"Nimic finalizat încă", noTareas:"Nicio sarcină",
@@ -693,23 +696,23 @@ window._fbCall = function(fn){
   <div class="stats-bar" id="stats-bar3"></div>
   <div class="dash-grid">
     <div class="card">
-      <div class="card-header">Por departamento</div>
+      <div class="card-header" data-i18n="porDepto">Por departamento</div>
       <div id="dash-dept"></div>
     </div>
     <div class="card">
-      <div class="card-header">Por prioridad</div>
+      <div class="card-header" data-i18n="porPrio">Por prioridad</div>
       <div id="dash-prio"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-header">% por departamento</div>
+    <div class="card-header" data-i18n="pctDepto">% por departamento</div>
     <div class="pie-wrap">
       <canvas id="pie-canvas" width="120" height="120" style="flex-shrink:0"></canvas>
       <div class="pie-legend" id="pie-legend"></div>
     </div>
   </div>
   <div class="card">
-    <div class="card-header">Historial mensual</div>
+    <div class="card-header" data-i18n="histMensual">Historial mensual</div>
     <div class="mes-grid" id="dash-mensual"></div>
   </div>
 </div>
@@ -911,11 +914,14 @@ let filtroActivo="";
 function save(){}
 function hoy(){return new Date().toISOString().split("T")[0]}
 function fmt(d){if(!d)return"-";const p=d.split("-");return p[2]+"/"+p[1]+"/"+p[0]}
-function ds(d){const c=DEPTS[d]||DEPTS.Otro;return`background:${c[0]};color:${c[1]}`}
-function dpill(d){return`<span class="dept-pill" style="${ds(d)}">${d}</span>`}
+function ds(d){const c=DEPTS[d]||DEPTS["Sin clasificar"];return`background:${c[0]};color:${c[1]}`}
+// Traduce SOLO la presentación (el dato guardado sigue en castellano)
+function labelDept(d){return d==="Sin clasificar"?T("d_sinclasif"):d;}
+function labelPrio(p){return p==="Alta"?T("p_alta"):p==="Media"?T("p_media"):p==="Baja"?T("p_baja"):T("p_sin");}
+function dpill(d){return`<span class="dept-pill" style="${ds(d)}">${labelDept(d)}</span>`}
 function ppill(p){
   if(!p)return`<span class="prio" style="background:rgba(148,163,184,0.15);color:#94a3b8;border:1px solid rgba(148,163,184,0.2)">—</span>`;
-  return`<span class="prio ${p}">${p}</span>`;
+  return`<span class="prio ${p}">${labelPrio(p)}</span>`;
 }
 function timepill(t,limite){
   if(!t)return"";
@@ -1061,7 +1067,7 @@ function renderTodas(){
   const chips=document.getElementById("filter-chips");
   const depts=[...new Set(tareas.map(t=>t.dept))];
   chips.innerHTML=`<div class="filter-chip ${!filtroActivo?'active':''}" onclick="setFiltro('')">${T("todos")}</div>`+
-    depts.map(d=>`<div class="filter-chip ${filtroActivo===d?'active':''}" onclick="setFiltro('${d}')">${d}</div>`).join("");
+    depts.map(d=>`<div class="filter-chip ${filtroActivo===d?'active':''}" onclick="setFiltro('${d}')">${labelDept(d)}</div>`).join("");
   
   const lista=filtroActivo?tareas.filter(t=>t.dept===filtroActivo):tareas;
   const sorted=lista.sort((a,b)=>{const p={Alta:0,Media:1,Baja:2,"":3};return (p[a.prio]??3)-(p[b.prio]??3);});
@@ -1100,8 +1106,8 @@ function renderDash(){
       const pendD=tareas.filter(t=>t.dept===d).length;
       const compD=window.hist.filter(t=>t.dept===d).length;
       return`<div class="dash-row">
-      <span class="dept-pill" style="${ds(d)};min-width:88px;text-align:center">${d}</span>
-      <div class="bar-wrap"><div class="bar" style="width:${Math.round((depts[d]||0)/maxD*100)}%;background:${(DEPTS[d]||DEPTS.Otro)[2]}"></div></div>
+      <span class="dept-pill" style="${ds(d)};min-width:88px;text-align:center">${labelDept(d)}</span>
+      <div class="bar-wrap"><div class="bar" style="width:${Math.round((depts[d]||0)/maxD*100)}%;background:${(DEPTS[d]||DEPTS["Sin clasificar"])[2]}"></div></div>
       <span style="font-size:11px;color:var(--text3);min-width:60px;text-align:right">
         <span style="color:var(--warn)">${pendD}⏳</span> <span style="color:var(--success)">${compD}✓</span>
       </span>
@@ -1111,7 +1117,7 @@ function renderDash(){
   const maxP=Math.max(...Object.values(prios),1);
   document.getElementById("dash-prio").innerHTML=["Alta","Media","Baja",""].filter(p=>prios[p]>0).map(p=>`
     <div class="dash-row">
-      <span class="prio ${p}" style="min-width:50px;text-align:center;${!p?"background:rgba(148,163,184,0.15);color:#94a3b8":""}">${p||"Sin prio."}</span>
+      <span class="prio ${p}" style="min-width:50px;text-align:center;${!p?"background:rgba(148,163,184,0.15);color:#94a3b8":""}">${p?labelPrio(p):T("p_sin")}</span>
       <div class="bar-wrap"><div class="bar" style="width:${Math.round(prios[p]/maxP*100)}%;background:${PC[p][2]}"></div></div>
       <span style="font-weight:700;min-width:18px;text-align:right;font-size:13px">${prios[p]}</span>
     </div>`).join("");
@@ -1134,7 +1140,7 @@ function drawPie(depts){
   const keys=Object.keys(depts);
   if(keys.length===0){ctx.clearRect(0,0,120,120);return;}
   const total=Object.values(depts).reduce((s,v)=>s+v,0);
-  const colors=keys.map(d=>(DEPTS[d]||DEPTS.Otro)[2]);
+  const colors=keys.map(d=>(DEPTS[d]||DEPTS["Sin clasificar"])[2]);
   let start=-Math.PI/2;
   ctx.clearRect(0,0,120,120);
   keys.forEach((k,i)=>{
@@ -1157,7 +1163,7 @@ function drawPie(depts){
   document.getElementById("pie-legend").innerHTML=keys.map((k,i)=>`
     <div class="legend-item">
       <div class="legend-dot" style="background:${colors[i]}"></div>
-      <span style="color:var(--text2);flex:1">${k}</span>
+      <span style="color:var(--text2);flex:1">${labelDept(k)}</span>
       <span style="font-weight:600;color:var(--text)">${Math.round(depts[k]/total*100)}%</span>
     </div>`).join("");
 }
